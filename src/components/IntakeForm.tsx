@@ -59,7 +59,7 @@ function QuestionControl({ field }: { field: SurveyFieldDef }) {
 
 function QuestionCard({ index, field }: { index: number; field: SurveyFieldDef }) {
   return (
-    <div className='rounded-16 border border-gray-200 bg-white px-24 py-20'>
+    <div className='rounded-16 bg-white px-24 py-20 shadow-card'>
       <p className='label-medium text-gray-900'>
         <span className='mr-[6px] text-gray-400'>{index}.</span>
         {field.label}

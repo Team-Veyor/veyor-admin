@@ -6,6 +6,30 @@ import type { SurveyRow } from '@/lib/survey-fields';
 
 export const dynamic = 'force-dynamic';
 
+const STAT_TONE = {
+  gray: 'text-gray-900',
+  warning: 'text-warning',
+  brand: 'text-brand',
+  info: 'text-success',
+} as const;
+
+function StatChip({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: keyof typeof STAT_TONE;
+}) {
+  return (
+    <div className='rounded-16 bg-white px-20 py-16 shadow-card'>
+      <p className='label-small text-gray-500'>{label}</p>
+      <p className={`title-small ${STAT_TONE[tone]}`}>{value}</p>
+    </div>
+  );
+}
+
 export default async function SurveysPage() {
   const supabase = getAdminClient();
   const { data, error } = await supabase
@@ -32,6 +56,20 @@ export default async function SurveysPage() {
           <PlusIcon className='size-16' />
           수기 등록
         </Link>
+      </div>
+      <div className='mb-16 grid grid-cols-2 gap-12 sm:grid-cols-4'>
+        <StatChip label='전체' value={rows.length} tone='gray' />
+        <StatChip
+          label='승인 대기'
+          value={rows.filter((r) => r.approval_status === 'pending').length}
+          tone='warning'
+        />
+        <StatChip label='게시중' value={rows.filter((r) => r.is_published).length} tone='brand' />
+        <StatChip
+          label='접수'
+          value={rows.filter((r) => r.source === 'intake').length}
+          tone='info'
+        />
       </div>
       {error && (
         <p className='mb-16 rounded-16 bg-surface-danger px-16 py-12 body-small text-danger'>

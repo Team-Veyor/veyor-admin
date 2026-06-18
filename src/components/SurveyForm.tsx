@@ -25,7 +25,7 @@ function Section({
   survey?: SurveyRow;
 }) {
   return (
-    <section className='rounded-20 bg-white px-24 py-20'>
+    <section className='rounded-20 bg-white px-24 py-20 shadow-card'>
       <div className='mb-16 flex flex-col gap-4'>
         <h2 className='label-large text-gray-900'>{title}</h2>
         {desc && <p className='body-small text-gray-500'>{desc}</p>}

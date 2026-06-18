@@ -56,9 +56,17 @@ function renderCell(row: SurveyRow, field: SurveyFieldDef, save: SaveFn) {
 
   if (INLINE_EDITABLE.has(col)) {
     if (field.kind === 'select') {
+      const tone =
+        col === 'approval_status'
+          ? value === 'approved'
+            ? 'text-brand'
+            : value === 'rejected'
+              ? 'text-danger'
+              : 'text-warning'
+          : '';
       return (
         <select
-          className={CELL_EDIT}
+          className={`${CELL_EDIT} ${tone}`}
           defaultValue={String(value ?? '')}
           onChange={(e) => save(row.id, col, e.target.value)}
         >
@@ -265,7 +273,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
         </p>
       )}
 
-      <div className='scrollbar-custom max-h-[calc(100vh-260px)] overflow-auto rounded-20 border border-gray-200 bg-white'>
+      <div className='scrollbar-custom max-h-[calc(100vh-260px)] overflow-auto rounded-20 border border-gray-200 bg-white shadow-card'>
         <table className='w-full border-separate border-spacing-0 whitespace-nowrap body-small'>
           <thead>
             <tr>
