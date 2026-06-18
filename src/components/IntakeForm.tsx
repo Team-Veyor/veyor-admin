@@ -6,28 +6,32 @@ import { SubmitButton } from '@/components/SubmitButton';
 import type { ActionState } from '@/lib/action-state';
 import { INTAKE_FIELDS, type SurveyFieldDef } from '@/lib/survey-fields';
 
-// 구글폼식 밑줄 입력
-const UNDERLINE =
-  'w-full border-0 border-b border-gray-300 bg-transparent px-1 py-8 body-medium text-gray-900 placeholder:text-gray-400 transition-colors focus:border-brand-500 focus:outline-none';
+// veyor 입력 스타일: 둥근 채움 박스 + 포커스 시 진한 보더
+const FIELD =
+  'w-full rounded-16 border border-gray-200 bg-gray-50 px-16 py-[13px] body-medium text-gray-900 placeholder:text-gray-400 transition-colors focus:border-gray-900 focus:outline-none';
+
+// veyor 선택 스타일: 채움 박스 + 선택 시 brand 하이라이트 (native radio, JS 불필요)
+const CHOICE =
+  'flex-1 cursor-pointer rounded-16 border border-gray-200 bg-gray-50 px-16 py-[13px] text-center label-medium text-gray-700 transition-colors hover:border-gray-300 has-[:checked]:border-brand has-[:checked]:bg-brand-alpha-10 has-[:checked]:text-brand';
 
 function QuestionControl({ field }: { field: SurveyFieldDef }) {
   const name = field.column as string;
 
   if (field.kind === 'textarea') {
     return (
-      <textarea name={name} rows={3} placeholder='내 답변' className={`${UNDERLINE} resize-y`} />
+      <textarea name={name} rows={3} placeholder='입력해 주세요' className={`${FIELD} resize-y`} />
     );
   }
   if (field.kind === 'boolean') {
     return (
-      <div className='flex flex-col gap-12 pt-4'>
+      <div className='flex gap-8'>
         {[
           { v: 'true', l: '예' },
           { v: 'false', l: '아니오' },
         ].map((o) => (
-          <label key={o.v} className='flex cursor-pointer items-center gap-12'>
-            <input type='radio' name={name} value={o.v} className='h-5 w-5 accent-brand-500' />
-            <span className='body-medium text-gray-800'>{o.l}</span>
+          <label key={o.v} className={CHOICE}>
+            <input type='radio' name={name} value={o.v} className='sr-only' />
+            {o.l}
           </label>
         ))}
       </div>
@@ -40,22 +44,22 @@ function QuestionControl({ field }: { field: SurveyFieldDef }) {
         name={name}
         inputMode='numeric'
         placeholder='숫자 입력'
-        className={UNDERLINE}
+        className={FIELD}
       />
     );
   }
   if (field.kind === 'date') {
-    return <input type='date' name={name} className={UNDERLINE} />;
+    return <input type='date' name={name} className={FIELD} />;
   }
   if (field.kind === 'url') {
-    return <input type='url' name={name} placeholder='https://' className={UNDERLINE} />;
+    return <input type='url' name={name} placeholder='https://' className={FIELD} />;
   }
-  return <input type='text' name={name} placeholder='내 답변' className={UNDERLINE} />;
+  return <input type='text' name={name} placeholder='입력해 주세요' className={FIELD} />;
 }
 
 function QuestionCard({ index, field }: { index: number; field: SurveyFieldDef }) {
   return (
-    <div className='rounded-12 border border-gray-200 bg-white px-24 py-20'>
+    <div className='rounded-16 border border-gray-200 bg-white px-24 py-20'>
       <p className='label-medium text-gray-900'>
         <span className='mr-[6px] text-gray-400'>{index}.</span>
         {field.label}
@@ -73,9 +77,9 @@ export function IntakeForm() {
   const [state, formAction] = useActionState<ActionState, FormData>(submitIntake, undefined);
 
   return (
-    <form action={formAction} className='flex flex-col gap-3'>
+    <form action={formAction} className='flex flex-col gap-12'>
       {state?.error && (
-        <div className='rounded-12 border border-red-200 bg-white px-24 py-16 body-small text-danger'>
+        <div className='rounded-16 border border-red-200 bg-white px-24 py-16 body-small text-danger'>
           {state.error}
         </div>
       )}
