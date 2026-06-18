@@ -1,12 +1,13 @@
 'use client';
 
 import { useFormStatus } from 'react-dom';
+import Button from '@/components/ui/Button';
 
-export function SubmitButton({ label, pendingLabel }: { label: string; pendingLabel?: string }) {
+export function SubmitButton({ label, fullWidth = true }: { label: string; fullWidth?: boolean }) {
   const { pending } = useFormStatus();
   return (
-    <button type='submit' className='btn btn-primary' disabled={pending}>
-      {pending ? (pendingLabel ?? '처리 중…') : label}
-    </button>
+    <Button type='submit' variant='primary' size='medium' fullWidth={fullWidth} isLoading={pending}>
+      {label}
+    </Button>
   );
 }

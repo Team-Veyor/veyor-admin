@@ -25,5 +25,9 @@
       "arrowParentheses": "always"
     }
   },
+  "css": {
+    "parser": { "tailwindDirectives": true },
+    "formatter": { "quoteStyle": "single" }
+  },
   "assist": { "enabled": true, "actions": { "source": { "organizeImports": "on" } } }
 }

@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useMemo, useState, useTransition } from 'react';
 import { deleteSurvey, updateSurveyField } from '@/app/actions/surveys';
+import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
 import {
   APPROVAL_OPTIONS,
   SOURCE_LABEL,
@@ -20,6 +22,12 @@ const INLINE_EDITABLE = new Set<string>([
   'post_contact_done',
   'collected_responses',
 ]);
+
+const CELL_EDIT =
+  'w-full min-w-[64px] rounded-8 border border-transparent bg-transparent px-2 py-1 body-small text-gray-900 transition-colors hover:border-gray-200 focus:border-brand-500 focus:outline-none';
+
+const TOOL =
+  'rounded-12 border border-gray-200 bg-white px-3 py-2 body-small text-gray-800 focus:border-gray-900 focus:outline-none';
 
 type SaveFn = (id: string, column: string, value: string) => void;
 
@@ -48,7 +56,7 @@ function renderCell(row: SurveyRow, field: SurveyFieldDef, save: SaveFn) {
     if (field.kind === 'select') {
       return (
         <select
-          className='cell-input'
+          className={CELL_EDIT}
           defaultValue={String(value ?? '')}
           onChange={(e) => save(row.id, col, e.target.value)}
         >
@@ -63,7 +71,7 @@ function renderCell(row: SurveyRow, field: SurveyFieldDef, save: SaveFn) {
     if (field.kind === 'boolean') {
       return (
         <select
-          className='cell-input'
+          className={CELL_EDIT}
           defaultValue={value ? 'true' : 'false'}
           onChange={(e) => save(row.id, col, e.target.value)}
         >
@@ -75,7 +83,7 @@ function renderCell(row: SurveyRow, field: SurveyFieldDef, save: SaveFn) {
     if (field.kind === 'number' || field.kind === 'money') {
       return (
         <input
-          className='cell-input'
+          className={CELL_EDIT}
           type='number'
           defaultValue={value == null ? '' : String(value)}
           onBlur={(e) => save(row.id, col, e.target.value)}
@@ -86,7 +94,12 @@ function renderCell(row: SurveyRow, field: SurveyFieldDef, save: SaveFn) {
 
   if (field.kind === 'url' && value) {
     return (
-      <a className='cell-link' href={String(value)} target='_blank' rel='noreferrer'>
+      <a
+        className='inline-block max-w-[220px] truncate align-middle text-brand underline-offset-2 hover:underline'
+        href={String(value)}
+        target='_blank'
+        rel='noreferrer'
+      >
         {String(value)}
       </a>
     );
@@ -94,15 +107,23 @@ function renderCell(row: SurveyRow, field: SurveyFieldDef, save: SaveFn) {
   if (field.kind === 'select') {
     const opt = (field.options ?? []).find((o) => o.value === String(value));
     if (col === 'approval_status') {
-      return <span className={`badge badge-${String(value)}`}>{opt?.label ?? String(value)}</span>;
+      const tone = value === 'approved' ? 'brand' : value === 'rejected' ? 'danger' : 'warning';
+      return <Badge type={tone}>{opt?.label ?? String(value)}</Badge>;
     }
-    return <span>{opt?.label ?? formatValue(field, value)}</span>;
+    return <span className='text-gray-800'>{opt?.label ?? formatValue(field, value)}</span>;
   }
   if (field.kind === 'boolean') {
-    return value ? <span className='bool-yes'>O</span> : <span className='bool-no'>—</span>;
+    return value ? (
+      <span className='label-small text-brand'>O</span>
+    ) : (
+      <span className='text-gray-300'>—</span>
+    );
   }
   return (
-    <span className='cell-truncate' title={value == null ? '' : String(value)}>
+    <span
+      className='inline-block max-w-[240px] truncate align-middle text-gray-800'
+      title={value == null ? '' : String(value)}
+    >
       {formatValue(field, value)}
     </span>
   );
@@ -195,8 +216,8 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
 
   return (
     <>
-      <div className='table-tools'>
-        <select value={approval} onChange={(e) => setApproval(e.target.value)}>
+      <div className='mb-3 flex flex-wrap items-center gap-2'>
+        <select value={approval} onChange={(e) => setApproval(e.target.value)} className={TOOL}>
           <option value='all'>승인: 전체</option>
           {APPROVAL_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
@@ -204,7 +225,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
             </option>
           ))}
         </select>
-        <select value={source} onChange={(e) => setSource(e.target.value)}>
+        <select value={source} onChange={(e) => setSource(e.target.value)} className={TOOL}>
           <option value='all'>출처: 전체</option>
           <option value='manual'>출처: 수기</option>
           <option value='intake'>출처: 접수</option>
@@ -214,47 +235,79 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
           placeholder='주제/제목/연락처 검색'
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          className={`${TOOL} w-[220px]`}
         />
-        <span className='count'>
+        <span className='subtext-small text-gray-500'>
           {filtered.length} / {rows.length}건{pending ? ' · 저장 중…' : ''}
         </span>
-        <span style={{ flex: 1 }} />
-        <button type='button' className='btn btn-sm' onClick={exportCsv}>
+        <span className='flex-1' />
+        <Button
+          type='button'
+          variant='secondary'
+          theme='light'
+          size='xsmall'
+          hasGlow={false}
+          onClick={exportCsv}
+        >
           CSV 내보내기
-        </button>
+        </Button>
       </div>
-      {error && <p className='error'>{error}</p>}
-      <div className='grid-wrap'>
-        <table className='grid'>
+
+      {error && (
+        <p className='mb-3 rounded-12 bg-surface-danger px-[14px] py-[10px] body-small text-danger'>
+          {error}
+        </p>
+      )}
+
+      <div className='scrollbar-custom max-h-[calc(100vh-240px)] overflow-auto rounded-16 border border-gray-200 bg-white'>
+        <table className='w-full border-separate border-spacing-0 whitespace-nowrap body-small'>
           <thead>
             <tr>
-              <th className='col-actions'>관리</th>
-              <th>출처</th>
+              <th className='sticky left-0 top-0 z-20 border-b border-r border-gray-200 bg-gray-50 px-3 py-[10px] text-left label-xsmall text-gray-600'>
+                관리
+              </th>
+              <th className='sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-3 py-[10px] text-left label-xsmall text-gray-600'>
+                출처
+              </th>
               {TABLE_FIELDS.map((f) => (
-                <th key={f.column as string}>{f.label}</th>
+                <th
+                  key={f.column as string}
+                  className='sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-3 py-[10px] text-left label-xsmall text-gray-600'
+                >
+                  {f.label}
+                </th>
               ))}
             </tr>
           </thead>
           <tbody>
             {filtered.map((r) => (
-              <tr key={r.id}>
-                <td className='col-actions'>
-                  <Link href={`/surveys/${r.id}`} className='btn btn-sm'>
-                    수정
-                  </Link>{' '}
-                  <button
-                    type='button'
-                    className='btn btn-sm btn-danger'
-                    onClick={() => onDelete(r.id, r.topic ?? r.title)}
-                  >
-                    삭제
-                  </button>
+              <tr key={r.id} className='group'>
+                <td className='sticky left-0 z-10 border-b border-r border-gray-200 bg-white px-3 py-2'>
+                  <div className='flex gap-1'>
+                    <Link
+                      href={`/surveys/${r.id}`}
+                      className='inline-flex items-center rounded-8 bg-gray-100 px-[10px] py-[5px] label-small text-gray-600 transition-colors hover:bg-gray-200'
+                    >
+                      수정
+                    </Link>
+                    <button
+                      type='button'
+                      onClick={() => onDelete(r.id, r.topic ?? r.title)}
+                      className='inline-flex items-center rounded-8 bg-red-50 px-[10px] py-[5px] label-small text-red-500 transition-colors hover:bg-red-100'
+                    >
+                      삭제
+                    </button>
+                  </div>
                 </td>
-                <td>
-                  <span className={`badge badge-source-${r.source}`}>{SOURCE_LABEL[r.source]}</span>
+                <td className='border-b border-gray-100 px-3 py-2'>
+                  <Badge type={r.source === 'intake' ? 'success' : 'default'}>
+                    {SOURCE_LABEL[r.source]}
+                  </Badge>
                 </td>
                 {TABLE_FIELDS.map((f) => (
-                  <td key={f.column as string}>{renderCell(r, f, save)}</td>
+                  <td key={f.column as string} className='border-b border-gray-100 px-3 py-2'>
+                    {renderCell(r, f, save)}
+                  </td>
                 ))}
               </tr>
             ))}
@@ -262,7 +315,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
               <tr>
                 <td
                   colSpan={TABLE_FIELDS.length + 2}
-                  style={{ textAlign: 'center', padding: 24, color: 'var(--muted)' }}
+                  className='px-3 py-10 text-center body-small text-gray-400'
                 >
                   설문이 없습니다.
                 </td>

@@ -5,7 +5,10 @@ const BOOL_OPTIONS = [
   { value: 'true', label: '예' },
 ];
 
-/** DB 값 → input 표시 문자열 */
+/** veyor-app Input 톤(연한 채움 + 회색 보더 + 포커스 시 진한 보더)을 어드민 밀도로 조정. */
+const CONTROL =
+  'w-full rounded-12 bg-gray-50 border border-gray-200 px-[14px] py-[10px] body-small text-gray-900 placeholder:text-gray-400 transition-colors focus:outline-none focus:border-gray-900 disabled:cursor-not-allowed disabled:opacity-60';
+
 function toInputValue(field: SurveyFieldDef, value: unknown): string {
   if (value == null) {
     return field.kind === 'boolean' ? 'false' : '';
@@ -35,11 +38,18 @@ export function Field({ field, value }: { field: SurveyFieldDef; value?: unknown
   let control: React.ReactNode;
   switch (field.kind) {
     case 'textarea':
-      control = <textarea id={name} name={name} defaultValue={v} />;
+      control = (
+        <textarea
+          id={name}
+          name={name}
+          defaultValue={v}
+          className={`${CONTROL} min-h-[76px] resize-y`}
+        />
+      );
       break;
     case 'select':
       control = (
-        <select id={name} name={name} defaultValue={v}>
+        <select id={name} name={name} defaultValue={v} className={CONTROL}>
           {(field.options ?? []).map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
@@ -50,7 +60,7 @@ export function Field({ field, value }: { field: SurveyFieldDef; value?: unknown
       break;
     case 'boolean':
       control = (
-        <select id={name} name={name} defaultValue={v}>
+        <select id={name} name={name} defaultValue={v} className={CONTROL}>
           {BOOL_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
@@ -61,30 +71,50 @@ export function Field({ field, value }: { field: SurveyFieldDef; value?: unknown
       break;
     case 'number':
     case 'money':
-      control = <input id={name} name={name} type='number' defaultValue={v} inputMode='numeric' />;
+      control = (
+        <input
+          id={name}
+          name={name}
+          type='number'
+          defaultValue={v}
+          inputMode='numeric'
+          className={CONTROL}
+        />
+      );
       break;
     case 'date':
-      control = <input id={name} name={name} type='date' defaultValue={v} />;
+      control = <input id={name} name={name} type='date' defaultValue={v} className={CONTROL} />;
       break;
     case 'datetime':
-      control = <input id={name} name={name} type='datetime-local' defaultValue={v} />;
+      control = (
+        <input id={name} name={name} type='datetime-local' defaultValue={v} className={CONTROL} />
+      );
       break;
     case 'url':
-      control = <input id={name} name={name} type='url' defaultValue={v} placeholder='https://' />;
+      control = (
+        <input
+          id={name}
+          name={name}
+          type='url'
+          defaultValue={v}
+          placeholder='https://'
+          className={CONTROL}
+        />
+      );
       break;
     default:
-      control = <input id={name} name={name} type='text' defaultValue={v} />;
+      control = <input id={name} name={name} type='text' defaultValue={v} className={CONTROL} />;
   }
 
   return (
-    <label className='field' htmlFor={name}>
-      <span className='field-label'>
+    <label className='flex flex-col gap-[6px]' htmlFor={name}>
+      <span className='label-small text-gray-700'>
         {field.label}
-        {field.requiredInIntake && <em className='req'>*</em>}
-        {field.kind === 'money' && <span className='field-hint'> (원)</span>}
+        {field.requiredInIntake && <em className='ml-[3px] not-italic text-red-500'>*</em>}
+        {field.kind === 'money' && <span className='subtext-small text-gray-400'> (원)</span>}
       </span>
       {control}
-      {field.hint && <span className='field-hint'>{field.hint}</span>}
+      {field.hint && <span className='subtext-small text-gray-500'>{field.hint}</span>}
     </label>
   );
 }
