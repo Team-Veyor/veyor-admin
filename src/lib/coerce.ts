@@ -23,3 +23,19 @@ export function coerceValue(raw: string, kind: FieldKind): unknown {
       return v;
   }
 }
+
+/** 'YYYY-MM-DD' 다음 날 문자열 반환(게시일+1=마감일 자동 계산). 빈 값/형식 오류 시 null. */
+export function addOneDay(dateStr: unknown): string | null {
+  if (typeof dateStr !== 'string') {
+    return null;
+  }
+  const m = dateStr.trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) {
+    return null;
+  }
+  const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  d.setUTCDate(d.getUTCDate() + 1);
+  const mo = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const da = String(d.getUTCDate()).padStart(2, '0');
+  return `${d.getUTCFullYear()}-${mo}-${da}`;
+}

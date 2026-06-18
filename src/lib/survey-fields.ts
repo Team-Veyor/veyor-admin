@@ -124,13 +124,13 @@ export const INTAKE_FIELDS: SurveyFieldDef[] = [
     requiredInIntake: true,
     hint: '설문 대상(연령/성별/특성 등)을 자유롭게 적어주세요.',
   },
-  { column: 'deadline', label: '설문 마감일', kind: 'date', owner: 'customer', inIntake: true },
   {
     column: 'requested_publish_date',
-    label: '희망 게시일',
+    label: '게시일',
     kind: 'date',
     owner: 'customer',
     inIntake: true,
+    hint: '설문을 게시할 날짜입니다. 마감일은 게시일 다음 날로 자동 설정됩니다.',
   },
   {
     column: 'suggested_amount',
@@ -328,14 +328,14 @@ export const TABLE_FIELDS: SurveyFieldDef[] = [
   { column: 'topic', label: '주제', kind: 'text', owner: 'customer', inIntake: true },
   { column: 'title', label: '노출 제목', kind: 'text', owner: 'operator', inIntake: false },
   { column: 'target_description', label: '대상', kind: 'text', owner: 'customer', inIntake: true },
-  { column: 'deadline', label: '마감일', kind: 'date', owner: 'customer', inIntake: true },
   {
     column: 'requested_publish_date',
-    label: '희망 게시일',
+    label: '게시일',
     kind: 'date',
     owner: 'customer',
     inIntake: true,
   },
+  { column: 'deadline', label: '마감일(자동)', kind: 'date', owner: 'customer', inIntake: true },
   {
     column: 'reward_amount',
     label: '리워드(확정)',
