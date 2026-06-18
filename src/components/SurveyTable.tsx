@@ -5,6 +5,7 @@ import { useMemo, useState, useTransition } from 'react';
 import { deleteSurvey, updateSurveyField } from '@/app/actions/surveys';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
+import { DownloadIcon, EditIcon, SearchIcon, TrashIcon } from '@/components/ui/icons';
 import {
   APPROVAL_OPTIONS,
   SOURCE_LABEL,
@@ -231,13 +232,16 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
           <option value='manual'>출처: 수기</option>
           <option value='intake'>출처: 접수</option>
         </select>
-        <input
-          type='search'
-          placeholder='주제 · 제목 · 연락처 검색'
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className={`${TOOL} w-[240px]`}
-        />
+        <div className='relative'>
+          <SearchIcon className='pointer-events-none absolute left-[12px] top-1/2 size-16 -translate-y-1/2 text-gray-400' />
+          <input
+            type='search'
+            placeholder='주제 · 제목 · 연락처 검색'
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className={`${TOOL} w-[240px] pl-[38px]`}
+          />
+        </div>
         <span className='body-small text-gray-500'>
           {filtered.length} / {rows.length}건{pending ? ' · 저장 중…' : ''}
         </span>
@@ -250,6 +254,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
           hasGlow={false}
           onClick={exportCsv}
         >
+          <DownloadIcon className='size-16' />
           CSV 내보내기
         </Button>
       </div>
@@ -280,16 +285,20 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
                   <div className='flex gap-4'>
                     <Link
                       href={`/surveys/${r.id}`}
-                      className='inline-flex items-center rounded-12 bg-gray-100 px-12 py-[6px] label-small text-gray-600 transition-colors hover:bg-gray-200'
+                      title='수정'
+                      aria-label='수정'
+                      className='inline-flex items-center justify-center rounded-12 bg-gray-100 p-[7px] text-gray-600 transition-colors hover:bg-gray-200'
                     >
-                      수정
+                      <EditIcon className='size-16' />
                     </Link>
                     <button
                       type='button'
                       onClick={() => onDelete(r.id, r.topic ?? r.title)}
-                      className='inline-flex items-center rounded-12 bg-red-50 px-12 py-[6px] label-small text-red-500 transition-colors hover:bg-red-100'
+                      title='삭제'
+                      aria-label='삭제'
+                      className='inline-flex items-center justify-center rounded-12 bg-red-50 p-[7px] text-red-500 transition-colors hover:bg-red-100'
                     >
-                      삭제
+                      <TrashIcon className='size-16' />
                     </button>
                   </div>
                 </td>
