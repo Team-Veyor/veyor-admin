@@ -1,0 +1,23 @@
+# dependencies
+node_modules/
+
+# next.js / build output
+.next/
+out/
+build/
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+.pnpm-debug.log*
+
+# env files — 비밀값 커밋 금지
+.env*
+!.env.example
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
