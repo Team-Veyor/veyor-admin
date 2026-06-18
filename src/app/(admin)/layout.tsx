@@ -18,7 +18,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <>
       <header className='sticky top-0 z-30 flex items-center gap-24 border-b border-gray-200 bg-white px-24 py-16'>
         <Link href='/' className='label-large text-gray-900'>
-          🍰 Veyor <span className='text-brand'>어드민</span>
+          Veyor <span className='text-brand'>어드민</span>
         </Link>
         <nav className='flex gap-20'>
           <Link href='/' className={NAV_LINK}>
