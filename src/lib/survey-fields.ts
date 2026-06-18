@@ -33,10 +33,14 @@ export interface SurveyFieldDef {
   inIntake: boolean;
   /** 접수 폼 필수 여부 */
   requiredInIntake?: boolean;
+  /** 수기 등록 등에서 필수 표시 */
+  required?: boolean;
   /** select 옵션 */
   options?: { value: string; label: string }[];
   /** 입력 도움말/예시 */
   hint?: string;
+  /** 입력칸 placeholder(예시값) */
+  placeholder?: string;
 }
 
 /** surveys 테이블 한 행의 전체 형태(마이그레이션 반영). */
@@ -253,6 +257,7 @@ export const OPERATOR_FIELDS: SurveyFieldDef[] = [
     kind: 'number',
     owner: 'operator',
     inIntake: false,
+    placeholder: '예: 50',
   },
   {
     column: 'admin_note',
@@ -260,6 +265,7 @@ export const OPERATOR_FIELDS: SurveyFieldDef[] = [
     kind: 'textarea',
     owner: 'operator',
     inIntake: false,
+    placeholder: '내부 메모',
   },
 ];
 
@@ -283,7 +289,9 @@ export const PUBLISH_FIELDS: SurveyFieldDef[] = [
     kind: 'text',
     owner: 'operator',
     inIntake: false,
+    required: true,
     hint: '앱에 표시될 설문 제목.',
+    placeholder: '예: 데일리 보부상 가방 디자인 설문조사',
   },
   {
     column: 'reward_amount',
@@ -291,6 +299,7 @@ export const PUBLISH_FIELDS: SurveyFieldDef[] = [
     kind: 'money',
     owner: 'operator',
     inIntake: false,
+    placeholder: '예: 300',
   },
   {
     column: 'est_minutes',
@@ -299,6 +308,7 @@ export const PUBLISH_FIELDS: SurveyFieldDef[] = [
     owner: 'operator',
     inIntake: false,
     hint: '예) 2-3',
+    placeholder: '2-3',
   },
   {
     column: 'target_gender',
@@ -314,6 +324,7 @@ export const PUBLISH_FIELDS: SurveyFieldDef[] = [
     kind: 'number',
     owner: 'operator',
     inIntake: false,
+    placeholder: '예: 1990',
   },
   {
     column: 'target_birth_year_max',
@@ -321,6 +332,7 @@ export const PUBLISH_FIELDS: SurveyFieldDef[] = [
     kind: 'number',
     owner: 'operator',
     inIntake: false,
+    placeholder: '예: 2005',
   },
   { column: 'opens_at', label: '노출 시작', kind: 'datetime', owner: 'operator', inIntake: false },
   {

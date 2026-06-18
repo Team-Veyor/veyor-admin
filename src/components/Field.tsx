@@ -34,6 +34,7 @@ function toInputValue(field: SurveyFieldDef, value: unknown): string {
 export function Field({ field, value }: { field: SurveyFieldDef; value?: unknown }) {
   const v = toInputValue(field, value);
   const name = field.column as string;
+  const ph = field.placeholder;
 
   let control: React.ReactNode;
   switch (field.kind) {
@@ -44,6 +45,7 @@ export function Field({ field, value }: { field: SurveyFieldDef; value?: unknown
           name={name}
           defaultValue={v}
           rows={3}
+          placeholder={ph}
           className={`${CONTROL} resize-y`}
         />
       );
@@ -79,6 +81,7 @@ export function Field({ field, value }: { field: SurveyFieldDef; value?: unknown
           type='number'
           defaultValue={v}
           inputMode='numeric'
+          placeholder={ph}
           className={CONTROL}
         />
       );
@@ -98,20 +101,31 @@ export function Field({ field, value }: { field: SurveyFieldDef; value?: unknown
           name={name}
           type='url'
           defaultValue={v}
-          placeholder='https://'
+          placeholder={ph ?? 'https://'}
           className={CONTROL}
         />
       );
       break;
     default:
-      control = <input id={name} name={name} type='text' defaultValue={v} className={CONTROL} />;
+      control = (
+        <input
+          id={name}
+          name={name}
+          type='text'
+          defaultValue={v}
+          placeholder={ph}
+          className={CONTROL}
+        />
+      );
   }
 
   return (
     <label className='flex flex-col gap-8' htmlFor={name}>
       <span className='label-small text-gray-600'>
         {field.label}
-        {field.requiredInIntake && <span className='ml-[3px] text-danger'>*</span>}
+        {(field.requiredInIntake || field.required) && (
+          <span className='ml-[3px] text-danger'>*</span>
+        )}
         {field.kind === 'money' && <span className='body-small text-gray-400'> (원)</span>}
       </span>
       {control}
