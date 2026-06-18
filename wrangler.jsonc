@@ -1,0 +1,26 @@
+/**
+ * Cloudflare Workers 설정 (veyor-admin). @opennextjs/cloudflare 로 빌드.
+ * 문서: https://opennext.js.org/cloudflare
+ *
+ * 런타임 환경변수:
+ *  - vars(아래): 공개값(NEXT_PUBLIC_*). 빌드 시 클라이언트 번들에도 인라인되고, 서버(proxy/SSR)에서 런타임으로도 읽음.
+ *  - secrets(커밋 금지, `wrangler secret put` 으로 설정): SUPABASE_SECRET_KEY, ADMIN_ALLOWLIST
+ */
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "veyor-admin",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2025-03-01",
+  "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".open-next/assets"
+  },
+  "observability": {
+    "enabled": true
+  },
+  "vars": {
+    "NEXT_PUBLIC_SUPABASE_URL": "https://vqhpfoyylmtzeeewkkgz.supabase.co",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_dXbUVSOrZ_MAFjTcB91d5w_vsLNqtqD"
+  }
+}

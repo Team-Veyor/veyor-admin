@@ -92,23 +92,32 @@ pnpm build
 
 ---
 
-## 배포 (Vercel)
+## 배포 (Cloudflare Workers)
 
-Next.js 자동 감지로 **무설정** 배포된다.
+`@opennextjs/cloudflare` 로 Cloudflare Workers 에 배포한다 (veyor-app client 와 동일 방식).
+설정: `wrangler.jsonc` · `open-next.config.ts`. 미들웨어는 **Edge 런타임**(`src/middleware.ts`)이어야 한다 — Node 런타임(`proxy.ts`)은 OpenNext 미지원.
 
-1. Vercel > **Add New > Project** > `Team-Veyor/veyor-admin` import (Framework: Next.js 자동, Root `./`).
-2. **Environment Variables** 등록 (Production + Preview):
+### 1) 런타임 환경변수
 
-   | 키 | 값 |
-   | --- | --- |
-   | `NEXT_PUBLIC_SUPABASE_URL` | Supabase 프로젝트 URL |
-   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | publishable key (`sb_publishable_...`) |
-   | `SUPABASE_SECRET_KEY` | secret key (`sb_secret_...`) — **Sensitive** 체크 |
-   | `ADMIN_ALLOWLIST` | 운영자 이메일(콤마 구분) |
+- **공개값**은 `wrangler.jsonc` 의 `vars` 에 이미 있음: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+- **비밀값**은 커밋 금지 — `wrangler secret` 으로 설정:
 
-3. **선행 조건**: veyor-app 에서 `supabase db push` 로 마이그레이션(승인/접수 컬럼) 적용. 누락 시 런타임 에러.
-4. Deploy. 이후 `main` 푸시/머지 시 자동 재배포.
+```bash
+pnpm wrangler secret put SUPABASE_SECRET_KEY   # sb_secret_...
+pnpm wrangler secret put ADMIN_ALLOWLIST       # 운영자 이메일(콤마 구분), 예: ops@aicx.kr
+```
 
-- 공개 접수 폼(모집자 공유용): `https://<배포도메인>/submit`
-- 운영자 로그인: `https://<배포도메인>/login`
+### 2) 선행 조건
+
+veyor-app 에서 `supabase db push` 로 마이그레이션(승인/접수 컬럼) 적용. 누락 시 런타임 에러.
+
+### 3) 배포
+
+```bash
+pnpm wrangler login    # 최초 1회 (또는 CLOUDFLARE_API_TOKEN 환경변수)
+pnpm deploy            # opennextjs-cloudflare build && deploy
+pnpm preview           # (선택) 로컬에서 Workers 런타임으로 미리보기
+```
+
+- 배포 후: 공개 접수 폼 `https://<워커도메인>/submit` · 운영자 로그인 `https://<워커도메인>/login`
 

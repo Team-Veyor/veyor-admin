@@ -9,8 +9,8 @@ function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));
 }
 
-/** Next 16 proxy(구 middleware). 운영자 세션 검사 + 허용목록 게이트. */
-export async function proxy(request: NextRequest) {
+/** 운영자 세션 검사 + 허용목록 게이트. Edge 런타임(Cloudflare/OpenNext 호환). */
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const isPublic = isPublicPath(pathname);
 
@@ -43,7 +43,6 @@ export async function proxy(request: NextRequest) {
   const allowed = isAllowed(data.user?.email);
 
   if (isPublic) {
-    // 이미 인증된 운영자가 /login 진입 시 홈으로
     if (pathname === '/login' && allowed) {
       return NextResponse.redirect(new URL('/', request.url));
     }
