@@ -1,6 +1,5 @@
 import Link from 'next/link';
 import { SurveyTable } from '@/components/SurveyTable';
-import { PlusIcon } from '@/components/ui/icons';
 import { getAdminClient } from '@/lib/supabase/admin';
 import type { SurveyRow } from '@/lib/survey-fields';
 
@@ -51,10 +50,9 @@ export default async function SurveysPage() {
         </div>
         <Link
           href='/surveys/new'
-          className='inline-flex shrink-0 items-center gap-[6px] rounded-16 bg-brand-500 px-16 py-12 label-small text-white shadow-[inset_0_0_12px_0_rgba(255,255,255,0.80)] transition-colors hover:bg-brand-600'
+          className='inline-flex shrink-0 items-center gap-4 rounded-16 bg-brand-500 px-16 py-12 label-small text-white shadow-[inset_0_0_12px_0_rgba(255,255,255,0.80)] transition-colors hover:bg-brand-600'
         >
-          <PlusIcon className='size-16' />
-          수기 등록
+          + 수기 등록
         </Link>
       </div>
       <div className='mb-16 grid grid-cols-2 gap-12 sm:grid-cols-4'>

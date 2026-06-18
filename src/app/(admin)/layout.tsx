@@ -2,14 +2,12 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { signOut } from '@/app/actions/auth';
 import Button from '@/components/ui/Button';
-import { ExternalIcon, ListIcon, PlusIcon } from '@/components/ui/icons';
 import LogoIcon from '@/components/ui/LogoIcon';
 import { getOperator } from '@/lib/guard';
 
 export const dynamic = 'force-dynamic';
 
-const NAV_LINK =
-  'flex items-center gap-[6px] body-medium text-gray-600 transition-colors hover:text-gray-900';
+const NAV_LINK = 'body-medium text-gray-600 transition-colors hover:text-gray-900';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const operator = await getOperator();
@@ -28,16 +26,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         </Link>
         <nav className='flex gap-20'>
           <Link href='/' className={NAV_LINK}>
-            <ListIcon className='size-16' />
             설문 관리
           </Link>
           <Link href='/surveys/new' className={NAV_LINK}>
-            <PlusIcon className='size-16' />
             수기 등록
           </Link>
           <Link href='/submit' target='_blank' className={NAV_LINK}>
-            접수 폼
-            <ExternalIcon className='size-16' />
+            접수 폼 ↗
           </Link>
         </nav>
         <span className='flex-1' />

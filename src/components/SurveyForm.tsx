@@ -26,11 +26,14 @@ function Section({
 }) {
   return (
     <section className='rounded-20 bg-white px-24 py-20 shadow-card'>
-      <div className='mb-16 flex flex-col gap-4'>
-        <h2 className='label-large text-gray-900'>{title}</h2>
-        {desc && <p className='body-small text-gray-500'>{desc}</p>}
+      <div className='mb-16 flex items-start gap-8'>
+        <span className='mt-[3px] h-[18px] w-[3px] shrink-0 rounded-max bg-brand-500' />
+        <div className='flex flex-col gap-1'>
+          <h2 className='label-large text-gray-900'>{title}</h2>
+          {desc && <p className='body-small text-gray-500'>{desc}</p>}
+        </div>
       </div>
-      <div className='grid grid-cols-1 gap-16 sm:grid-cols-2 lg:grid-cols-3'>
+      <div className='grid grid-cols-1 gap-x-20 gap-y-16 sm:grid-cols-2'>
         {fields.map((f) => (
           <Field key={f.column as string} field={f} value={survey?.[f.column]} />
         ))}

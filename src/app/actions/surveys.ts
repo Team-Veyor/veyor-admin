@@ -121,6 +121,15 @@ export async function updateSurveyField(
 export async function deleteSurvey(id: string): Promise<{ ok: boolean; error?: string }> {
   await requireOperator();
   const supabase = getAdminClient();
+  // 게시 중이거나 승인된 설문은 삭제 불가 (클라이언트 + 서버 2중 차단)
+  const { data: target } = await supabase
+    .from('surveys')
+    .select('is_published, approval_status')
+    .eq('id', id)
+    .maybeSingle();
+  if (target?.is_published || target?.approval_status === 'approved') {
+    return { ok: false, error: '게시 중이거나 승인된 설문은 삭제할 수 없습니다.' };
+  }
   const { error } = await supabase.from('surveys').delete().eq('id', id);
   if (error) {
     return { ok: false, error: error.message };
