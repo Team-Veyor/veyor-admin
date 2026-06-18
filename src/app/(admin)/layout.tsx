@@ -6,7 +6,7 @@ import { getOperator } from '@/lib/guard';
 
 export const dynamic = 'force-dynamic';
 
-const NAV_LINK = 'body-small text-gray-600 transition-colors hover:text-gray-900';
+const NAV_LINK = 'body-medium text-gray-600 transition-colors hover:text-gray-900';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const operator = await getOperator();
@@ -16,11 +16,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <>
-      <header className='sticky top-0 z-30 flex items-center gap-5 border-b border-gray-200 bg-white px-5 py-3'>
-        <Link href='/' className='label-medium text-gray-900'>
+      <header className='sticky top-0 z-30 flex items-center gap-24 border-b border-gray-200 bg-white px-24 py-16'>
+        <Link href='/' className='label-large text-gray-900'>
           🍰 Veyor <span className='text-brand'>어드민</span>
         </Link>
-        <nav className='flex gap-4'>
+        <nav className='flex gap-20'>
           <Link href='/' className={NAV_LINK}>
             설문 관리
           </Link>
@@ -32,14 +32,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           </Link>
         </nav>
         <span className='flex-1' />
-        <span className='subtext-small text-gray-500'>{operator.email}</span>
+        <span className='body-small text-gray-500'>{operator.email}</span>
         <form action={signOut}>
-          <Button type='submit' variant='secondary' theme='light' size='xsmall' hasGlow={false}>
+          <Button type='submit' variant='secondary' theme='light' size='small' hasGlow={false}>
             로그아웃
           </Button>
         </form>
       </header>
-      <main className='mx-auto max-w-[1400px] p-5'>{children}</main>
+      <main className='mx-auto max-w-[1440px] px-24 py-24'>{children}</main>
     </>
   );
 }

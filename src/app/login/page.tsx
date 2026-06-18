@@ -4,12 +4,17 @@ export const metadata = { title: '로그인 — Veyor 어드민' };
 
 export default function LoginPage() {
   return (
-    <div className='mx-auto mt-[12vh] w-[400px] max-w-[90vw] rounded-16 border border-gray-200 bg-white p-6'>
-      <h1 className='title-small text-gray-900'>
-        🍰 Veyor <span className='text-brand'>어드민</span>
-      </h1>
-      <p className='mb-5 mt-1 subtext-medium text-gray-500'>운영자 로그인</p>
-      <LoginForm />
-    </div>
+    <main className='flex min-h-dvh items-center justify-center bg-gray-100 px-5 py-10'>
+      <section className='w-full max-w-[420px] rounded-24 bg-white px-24 py-32'>
+        <div className='mb-32 flex flex-col items-center gap-8'>
+          <span className='text-30 leading-none'>🍰</span>
+          <h1 className='title-small text-gray-900'>
+            Veyor <span className='text-brand'>어드민</span>
+          </h1>
+          <p className='body-small text-gray-500'>운영자 로그인</p>
+        </div>
+        <LoginForm />
+      </section>
+    </main>
   );
 }

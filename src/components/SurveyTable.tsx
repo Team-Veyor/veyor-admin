@@ -13,7 +13,7 @@ import {
   TABLE_FIELDS,
 } from '@/lib/survey-fields';
 
-/** 테이블에서 바로 수정 가능한 컬럼(검토/승인/정산 운영 작업). */
+/** 테이블에서 바로 수정 가능한 컬럼(검토·승인·정산 운영 작업). */
 const INLINE_EDITABLE = new Set<string>([
   'approval_status',
   'settlement_status',
@@ -24,10 +24,14 @@ const INLINE_EDITABLE = new Set<string>([
 ]);
 
 const CELL_EDIT =
-  'w-full min-w-[64px] rounded-8 border border-transparent bg-transparent px-2 py-1 body-small text-gray-900 transition-colors hover:border-gray-200 focus:border-brand-500 focus:outline-none';
+  'w-full min-w-[72px] rounded-8 border border-transparent bg-transparent px-8 py-[6px] body-small text-gray-900 transition-colors hover:border-gray-200 focus:border-brand-500 focus:outline-none';
 
 const TOOL =
-  'rounded-12 border border-gray-200 bg-white px-3 py-2 body-small text-gray-800 focus:border-gray-900 focus:outline-none';
+  'rounded-16 border border-gray-200 bg-white px-16 py-[10px] body-small text-gray-800 transition-colors focus:border-gray-900 focus:outline-none';
+
+const TH =
+  'sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-12 py-12 text-left label-xsmall text-gray-500';
+const TD = 'border-b border-gray-100 px-12 py-12 align-middle';
 
 type SaveFn = (id: string, column: string, value: string) => void;
 
@@ -37,9 +41,6 @@ function formatValue(field: SurveyFieldDef, value: unknown): string {
   }
   if (field.kind === 'money' || field.kind === 'number') {
     return Number(value).toLocaleString('ko-KR');
-  }
-  if (field.kind === 'boolean') {
-    return value ? 'O' : '—';
   }
   if (field.kind === 'select') {
     const opt = (field.options ?? []).find((o) => o.value === String(value));
@@ -216,7 +217,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
 
   return (
     <>
-      <div className='mb-3 flex flex-wrap items-center gap-2'>
+      <div className='mb-16 flex flex-wrap items-center gap-8'>
         <select value={approval} onChange={(e) => setApproval(e.target.value)} className={TOOL}>
           <option value='all'>승인: 전체</option>
           {APPROVAL_OPTIONS.map((o) => (
@@ -232,12 +233,12 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
         </select>
         <input
           type='search'
-          placeholder='주제/제목/연락처 검색'
+          placeholder='주제 · 제목 · 연락처 검색'
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className={`${TOOL} w-[220px]`}
+          className={`${TOOL} w-[240px]`}
         />
-        <span className='subtext-small text-gray-500'>
+        <span className='body-small text-gray-500'>
           {filtered.length} / {rows.length}건{pending ? ' · 저장 중…' : ''}
         </span>
         <span className='flex-1' />
@@ -245,7 +246,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
           type='button'
           variant='secondary'
           theme='light'
-          size='xsmall'
+          size='small'
           hasGlow={false}
           onClick={exportCsv}
         >
@@ -254,26 +255,19 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
       </div>
 
       {error && (
-        <p className='mb-3 rounded-12 bg-surface-danger px-[14px] py-[10px] body-small text-danger'>
+        <p className='mb-16 rounded-16 bg-surface-danger px-16 py-12 body-small text-danger'>
           {error}
         </p>
       )}
 
-      <div className='scrollbar-custom max-h-[calc(100vh-240px)] overflow-auto rounded-16 border border-gray-200 bg-white'>
+      <div className='scrollbar-custom max-h-[calc(100vh-260px)] overflow-auto rounded-20 border border-gray-200 bg-white'>
         <table className='w-full border-separate border-spacing-0 whitespace-nowrap body-small'>
           <thead>
             <tr>
-              <th className='sticky left-0 top-0 z-20 border-b border-r border-gray-200 bg-gray-50 px-3 py-[10px] text-left label-xsmall text-gray-600'>
-                관리
-              </th>
-              <th className='sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-3 py-[10px] text-left label-xsmall text-gray-600'>
-                출처
-              </th>
+              <th className={`${TH} sticky left-0 z-20 border-r`}>관리</th>
+              <th className={TH}>출처</th>
               {TABLE_FIELDS.map((f) => (
-                <th
-                  key={f.column as string}
-                  className='sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-3 py-[10px] text-left label-xsmall text-gray-600'
-                >
+                <th key={f.column as string} className={TH}>
                   {f.label}
                 </th>
               ))}
@@ -281,31 +275,31 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
           </thead>
           <tbody>
             {filtered.map((r) => (
-              <tr key={r.id} className='group'>
-                <td className='sticky left-0 z-10 border-b border-r border-gray-200 bg-white px-3 py-2'>
-                  <div className='flex gap-1'>
+              <tr key={r.id} className='transition-colors hover:bg-gray-50'>
+                <td className={`${TD} sticky left-0 z-10 border-r border-gray-200 bg-white`}>
+                  <div className='flex gap-4'>
                     <Link
                       href={`/surveys/${r.id}`}
-                      className='inline-flex items-center rounded-8 bg-gray-100 px-[10px] py-[5px] label-small text-gray-600 transition-colors hover:bg-gray-200'
+                      className='inline-flex items-center rounded-12 bg-gray-100 px-12 py-[6px] label-small text-gray-600 transition-colors hover:bg-gray-200'
                     >
                       수정
                     </Link>
                     <button
                       type='button'
                       onClick={() => onDelete(r.id, r.topic ?? r.title)}
-                      className='inline-flex items-center rounded-8 bg-red-50 px-[10px] py-[5px] label-small text-red-500 transition-colors hover:bg-red-100'
+                      className='inline-flex items-center rounded-12 bg-red-50 px-12 py-[6px] label-small text-red-500 transition-colors hover:bg-red-100'
                     >
                       삭제
                     </button>
                   </div>
                 </td>
-                <td className='border-b border-gray-100 px-3 py-2'>
+                <td className={TD}>
                   <Badge type={r.source === 'intake' ? 'success' : 'default'}>
                     {SOURCE_LABEL[r.source]}
                   </Badge>
                 </td>
                 {TABLE_FIELDS.map((f) => (
-                  <td key={f.column as string} className='border-b border-gray-100 px-3 py-2'>
+                  <td key={f.column as string} className={TD}>
                     {renderCell(r, f, save)}
                   </td>
                 ))}
@@ -315,7 +309,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
               <tr>
                 <td
                   colSpan={TABLE_FIELDS.length + 2}
-                  className='px-3 py-10 text-center body-small text-gray-400'
+                  className='px-12 py-32 text-center body-medium text-gray-400'
                 >
                   설문이 없습니다.
                 </td>

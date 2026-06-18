@@ -3,12 +3,8 @@
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
 import { getBrowserClient } from '@/lib/supabase/client';
-
-const FIELD_WRAP =
-  'w-full rounded-16 bg-gray-50 px-[16px] py-[14px] border border-gray-200 focus-within:border-gray-900 transition-colors';
-const FIELD_INPUT =
-  'w-full bg-transparent body-medium text-gray-900 placeholder:text-gray-400 focus:outline-none';
 
 export function LoginForm() {
   const router = useRouter();
@@ -38,46 +34,43 @@ export function LoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} className='flex flex-col gap-12'>
+    <form onSubmit={onSubmit} className='flex flex-col gap-16'>
       {error && (
-        <p className='rounded-12 bg-surface-danger px-[14px] py-[10px] body-small text-danger'>
-          {error}
-        </p>
+        <p className='rounded-16 bg-surface-danger px-16 py-12 body-small text-danger'>{error}</p>
       )}
-      <label className='flex flex-col gap-[6px]' htmlFor='email'>
-        <span className='label-small text-gray-700'>이메일</span>
-        <span className={FIELD_WRAP}>
-          <input
-            id='email'
-            type='email'
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            autoComplete='email'
-            className={FIELD_INPUT}
-          />
-        </span>
-      </label>
-      <label className='flex flex-col gap-[6px]' htmlFor='password'>
-        <span className='label-small text-gray-700'>비밀번호</span>
-        <span className={FIELD_WRAP}>
-          <input
-            id='password'
-            type='password'
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete='current-password'
-            className={FIELD_INPUT}
-          />
-        </span>
-      </label>
-      <Button type='submit' variant='primary' size='medium' fullWidth isLoading={loading}>
+      <div className='flex flex-col gap-8'>
+        <span className='label-small text-gray-600'>이메일</span>
+        <Input
+          type='email'
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder='ops@example.com'
+          required
+          autoComplete='email'
+        />
+      </div>
+      <div className='flex flex-col gap-8'>
+        <span className='label-small text-gray-600'>비밀번호</span>
+        <Input
+          type='password'
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder='••••••••'
+          required
+          autoComplete='current-password'
+        />
+      </div>
+      <Button
+        type='submit'
+        variant='primary'
+        size='large'
+        fullWidth
+        isLoading={loading}
+        className='mt-8'
+      >
         로그인
       </Button>
-      <p className='subtext-small text-gray-500'>
-        허용된 운영자 계정(ADMIN_ALLOWLIST)만 접근할 수 있습니다.
-      </p>
+      <p className='body-small text-gray-400'>허용된 운영자 계정만 접근할 수 있습니다.</p>
     </form>
   );
 }

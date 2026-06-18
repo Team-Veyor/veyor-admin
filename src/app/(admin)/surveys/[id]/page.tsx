@@ -17,11 +17,14 @@ export default async function EditSurveyPage({ params }: { params: Promise<{ id:
 
   return (
     <>
-      <div className='mb-4 flex items-center justify-between gap-3'>
-        <h1 className='title-small text-gray-900'>설문 수정</h1>
+      <div className='mb-20 flex items-center justify-between gap-12'>
+        <div className='flex flex-col gap-4'>
+          <h1 className='title-small text-gray-900'>설문 수정</h1>
+          <p className='body-small text-gray-500'>{survey.topic || survey.title || '제목 없음'}</p>
+        </div>
         <Link
           href='/'
-          className='inline-flex items-center rounded-[16px] bg-gray-100 px-4 py-[10px] label-small text-gray-600 transition-colors hover:bg-gray-200'
+          className='inline-flex shrink-0 items-center rounded-16 bg-gray-100 px-16 py-12 label-small text-gray-600 transition-colors hover:bg-gray-200'
         >
           ← 목록
         </Link>

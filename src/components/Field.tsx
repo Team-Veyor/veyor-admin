@@ -5,9 +5,9 @@ const BOOL_OPTIONS = [
   { value: 'true', label: '예' },
 ];
 
-/** veyor-app Input 톤(연한 채움 + 회색 보더 + 포커스 시 진한 보더)을 어드민 밀도로 조정. */
+/** veyor-app Input 톤(rounded-16 · bg-gray-50 · 회색 보더 · 포커스 진한 보더)을 폼 컨트롤 전반에 통일. */
 const CONTROL =
-  'w-full rounded-12 bg-gray-50 border border-gray-200 px-[14px] py-[10px] body-small text-gray-900 placeholder:text-gray-400 transition-colors focus:outline-none focus:border-gray-900 disabled:cursor-not-allowed disabled:opacity-60';
+  'w-full rounded-16 border border-gray-200 bg-gray-50 px-16 py-[13px] body-medium text-gray-900 placeholder:text-gray-400 transition-colors focus:border-gray-900 focus:outline-none disabled:cursor-not-allowed disabled:opacity-60';
 
 function toInputValue(field: SurveyFieldDef, value: unknown): string {
   if (value == null) {
@@ -43,7 +43,8 @@ export function Field({ field, value }: { field: SurveyFieldDef; value?: unknown
           id={name}
           name={name}
           defaultValue={v}
-          className={`${CONTROL} min-h-[76px] resize-y`}
+          rows={3}
+          className={`${CONTROL} resize-y`}
         />
       );
       break;
@@ -107,14 +108,14 @@ export function Field({ field, value }: { field: SurveyFieldDef; value?: unknown
   }
 
   return (
-    <label className='flex flex-col gap-[6px]' htmlFor={name}>
-      <span className='label-small text-gray-700'>
+    <label className='flex flex-col gap-8' htmlFor={name}>
+      <span className='label-small text-gray-600'>
         {field.label}
-        {field.requiredInIntake && <em className='ml-[3px] not-italic text-red-500'>*</em>}
-        {field.kind === 'money' && <span className='subtext-small text-gray-400'> (원)</span>}
+        {field.requiredInIntake && <span className='ml-[3px] text-danger'>*</span>}
+        {field.kind === 'money' && <span className='body-small text-gray-400'> (원)</span>}
       </span>
       {control}
-      {field.hint && <span className='subtext-small text-gray-500'>{field.hint}</span>}
+      {field.hint && <span className='body-small text-gray-400'>{field.hint}</span>}
     </label>
   );
 }

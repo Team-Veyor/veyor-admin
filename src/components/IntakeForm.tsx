@@ -11,13 +11,13 @@ export function IntakeForm() {
   const [state, formAction] = useActionState<ActionState, FormData>(submitIntake, undefined);
 
   return (
-    <form action={formAction} className='flex flex-col gap-5'>
+    <form action={formAction} className='flex flex-col gap-20'>
       {state?.error && (
-        <p className='rounded-12 bg-surface-danger px-[14px] py-[10px] body-small text-danger'>
+        <p className='rounded-16 bg-surface-danger px-16 py-12 body-small text-danger'>
           {state.error}
         </p>
       )}
-      <div className='grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2'>
+      <div className='grid grid-cols-1 gap-16 sm:grid-cols-2'>
         {INTAKE_FIELDS.map((f) => (
           <Field key={f.column as string} field={f} />
         ))}
