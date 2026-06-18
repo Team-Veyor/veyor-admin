@@ -7,8 +7,9 @@ import { SubmitButton } from '@/components/SubmitButton';
 import type { ActionState } from '@/lib/action-state';
 import {
   INTAKE_FIELDS,
-  OPERATOR_FIELDS,
+  OPS_FIELDS,
   PUBLISH_FIELDS,
+  STATUS_FIELDS,
   type SurveyFieldDef,
   type SurveyRow,
 } from '@/lib/survey-fields';
@@ -55,14 +56,25 @@ export function SurveyForm({ mode, survey }: { mode: 'create' | 'edit'; survey?:
         </p>
       )}
       <Section
-        title='노출(확정) 항목'
-        desc='앱(오늘의 설문)에 실제 노출되는 값입니다. 승인·게시 시 확정하세요.'
+        title='상태'
+        desc='승인하고 게시여부를 켜면 앱(오늘의 설문)에 노출됩니다.'
+        fields={STATUS_FIELDS}
+        survey={survey}
+      />
+      <Section
+        title='게시 설정'
+        desc='앱에 실제 노출되는 값입니다.'
         fields={PUBLISH_FIELDS}
         survey={survey}
       />
-      <Section title='접수 항목 (고객 입력)' fields={INTAKE_FIELDS} survey={survey} />
-      <Section title='운영 항목 (검토 · 승인 · 정산)' fields={OPERATOR_FIELDS} survey={survey} />
-      <div className='w-[180px] pt-4'>
+      <Section
+        title='접수 정보'
+        desc='고객이 접수 폼으로 보낸 내용입니다.'
+        fields={INTAKE_FIELDS}
+        survey={survey}
+      />
+      <Section title='운영 · 정산' fields={OPS_FIELDS} survey={survey} />
+      <div className='w-[180px]'>
         <SubmitButton label={mode === 'create' ? '등록' : '저장'} fullWidth />
       </div>
     </form>

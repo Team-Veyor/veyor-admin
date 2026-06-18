@@ -263,6 +263,16 @@ export const OPERATOR_FIELDS: SurveyFieldDef[] = [
   },
 ];
 
+/** 상태 제어(승인 여부 · 게시여부) — 상세 상단 강조용. */
+export const STATUS_FIELDS: SurveyFieldDef[] = OPERATOR_FIELDS.filter(
+  (f) => f.column === 'approval_status' || f.column === 'is_published',
+);
+
+/** 운영 · 정산 항목(상태 제외). */
+export const OPS_FIELDS: SurveyFieldDef[] = OPERATOR_FIELDS.filter(
+  (f) => f.column !== 'approval_status' && f.column !== 'is_published',
+);
+
 /**
  * 앱(오늘의 설문)에 실제 노출되는 확정 항목. 운영자가 승인·게시 시 확정한다.
  */
