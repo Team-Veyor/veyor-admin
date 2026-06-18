@@ -53,6 +53,7 @@ export interface SurveyRow {
   // 고객 접수 항목
   topic: string | null;
   target_description: string | null;
+  target_occupation: string | null;
   deadline: string | null;
   requested_publish_date: string | null;
   suggested_amount: number | null;
@@ -101,6 +102,17 @@ export const GENDER_OPTIONS = [
   { value: 'female', label: '여성' },
 ];
 
+export const OCCUPATION_OPTIONS = [
+  { value: '', label: '전체' },
+  { value: '중학생', label: '중학생' },
+  { value: '고등학생', label: '고등학생' },
+  { value: '대학생', label: '대학생' },
+  { value: '직장인', label: '직장인' },
+  { value: '무직', label: '무직' },
+  { value: '주부', label: '주부' },
+  { value: '기타', label: '기타' },
+];
+
 export const SOURCE_LABEL: Record<SurveyRow['source'], string> = {
   manual: '수기',
   intake: '접수',
@@ -127,6 +139,15 @@ export const INTAKE_FIELDS: SurveyFieldDef[] = [
     inIntake: true,
     requiredInIntake: true,
     hint: '설문 대상(연령/성별/특성 등)을 자유롭게 적어주세요.',
+  },
+  {
+    column: 'target_occupation',
+    label: '직업',
+    kind: 'select',
+    owner: 'customer',
+    inIntake: true,
+    options: OCCUPATION_OPTIONS,
+    hint: '설문 대상의 직업군을 선택해주세요.',
   },
   {
     column: 'requested_publish_date',
@@ -350,6 +371,14 @@ export const TABLE_FIELDS: SurveyFieldDef[] = [
   { column: 'topic', label: '주제', kind: 'text', owner: 'customer', inIntake: true },
   { column: 'title', label: '노출 제목', kind: 'text', owner: 'operator', inIntake: false },
   { column: 'target_description', label: '대상', kind: 'text', owner: 'customer', inIntake: true },
+  {
+    column: 'target_occupation',
+    label: '직업',
+    kind: 'select',
+    owner: 'customer',
+    inIntake: true,
+    options: OCCUPATION_OPTIONS,
+  },
   {
     column: 'requested_publish_date',
     label: '게시일',
