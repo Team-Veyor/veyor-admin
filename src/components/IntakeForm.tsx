@@ -37,6 +37,21 @@ function QuestionControl({ field }: { field: SurveyFieldDef }) {
       </div>
     );
   }
+  if (field.kind === 'select') {
+    return (
+      <div className='flex flex-col gap-8'>
+        {(field.options ?? []).map((o) => (
+          <label
+            key={o.value}
+            className='flex cursor-pointer items-center gap-12 rounded-16 border border-gray-200 bg-gray-50 px-16 py-[13px] body-medium text-gray-700 transition-colors hover:border-gray-300 has-[:checked]:border-brand has-[:checked]:bg-brand-alpha-10 has-[:checked]:text-brand'
+          >
+            <input type='radio' name={name} value={o.value} className='sr-only' />
+            {o.label}
+          </label>
+        ))}
+      </div>
+    );
+  }
   if (field.kind === 'number' || field.kind === 'money') {
     return (
       <input
