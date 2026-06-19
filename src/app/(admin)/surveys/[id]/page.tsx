@@ -4,7 +4,7 @@ import { SurveyDeleteButton } from '@/components/SurveyDeleteButton';
 import { SurveyForm } from '@/components/SurveyForm';
 import Badge from '@/components/ui/Badge';
 import { getAdminClient } from '@/lib/supabase/admin';
-import type { SurveyRow } from '@/lib/survey-fields';
+import { flattenSurvey, SURVEY_SELECT } from '@/lib/survey-fields';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,11 +17,11 @@ const APPROVAL_BADGE = {
 export default async function EditSurveyPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = getAdminClient();
-  const { data } = await supabase.from('surveys').select('*').eq('id', id).maybeSingle();
+  const { data } = await supabase.from('surveys').select(SURVEY_SELECT).eq('id', id).maybeSingle();
   if (!data) {
     notFound();
   }
-  const survey = data as SurveyRow;
+  const survey = flattenSurvey(data as Record<string, unknown>);
   const badge = APPROVAL_BADGE[survey.approval_status];
   const canDelete = !survey.is_published && survey.approval_status !== 'approved';
 

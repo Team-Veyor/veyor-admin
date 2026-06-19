@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { SurveyTable } from '@/components/SurveyTable';
 import { getAdminClient } from '@/lib/supabase/admin';
-import type { SurveyRow } from '@/lib/survey-fields';
+import { flattenSurvey, SURVEY_SELECT } from '@/lib/survey-fields';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,11 +33,11 @@ export default async function SurveysPage() {
   const supabase = getAdminClient();
   const { data, error } = await supabase
     .from('surveys')
-    .select('*')
+    .select(SURVEY_SELECT)
     .order('created_at', { ascending: false })
     .limit(1000);
 
-  const rows = (data ?? []) as SurveyRow[];
+  const rows = ((data ?? []) as Record<string, unknown>[]).map(flattenSurvey);
 
   return (
     <>

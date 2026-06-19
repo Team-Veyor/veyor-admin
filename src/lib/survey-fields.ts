@@ -84,6 +84,76 @@ export interface SurveyRow {
   updated_at: string;
 }
 
+// ── 테이블 분리: surveys(소비자/게이트) + survey_intakes(접수 원본) + survey_operations(운영/정산) 1:1 ──
+// SurveyRow 는 플랫 유지(컴포넌트 무변경). 조회 시 합치고, 저장 시 컬럼을 물리 테이블로 분배한다.
+
+/** survey_intakes 로 분리된 컬럼(고객 접수 원본). */
+export const INTAKE_COLUMNS = [
+  'topic',
+  'target_description',
+  'requested_publish_date',
+  'deadline',
+  'suggested_amount',
+  'contact',
+  'target_respondents',
+  'interview_consent',
+  'reward_budget',
+  'paid_recruit_count',
+] as const;
+
+/** survey_operations 로 분리된 컬럼(운영/정산). */
+export const OPS_COLUMNS = [
+  'pre_contact_done',
+  'pre_contact_reply',
+  'post_contact_done',
+  'post_contact_reply',
+  'settlement_status',
+  'collected_responses',
+  'admin_note',
+] as const;
+
+/** 중첩 조회용 select (surveys + 1:1 확장 테이블). */
+export const SURVEY_SELECT = '*, survey_intakes(*), survey_operations(*)';
+
+const INTAKE_SET = new Set<string>(INTAKE_COLUMNS);
+const OPS_SET = new Set<string>(OPS_COLUMNS);
+
+/** 컬럼이 실제로 사는 물리 테이블. */
+export function tableOf(column: string): 'surveys' | 'survey_intakes' | 'survey_operations' {
+  if (INTAKE_SET.has(column)) return 'survey_intakes';
+  if (OPS_SET.has(column)) return 'survey_operations';
+  return 'surveys';
+}
+
+/** 중첩 조회 결과 1행을 플랫 SurveyRow로 합친다(확장 테이블 값 우선). */
+export function flattenSurvey(row: Record<string, unknown>): SurveyRow {
+  const pick = (v: unknown) =>
+    (Array.isArray(v) ? v[0] : v) as Record<string, unknown> | null | undefined;
+  const intake = pick(row.survey_intakes) ?? {};
+  const operations = pick(row.survey_operations) ?? {};
+  const base: Record<string, unknown> = { ...row };
+  delete base.survey_intakes;
+  delete base.survey_operations;
+  return { ...base, ...intake, ...operations } as unknown as SurveyRow;
+}
+
+/** 플랫 행을 테이블별 페이로드로 분리. */
+export function splitByTable(row: Record<string, unknown>): {
+  surveys: Record<string, unknown>;
+  intakes: Record<string, unknown>;
+  operations: Record<string, unknown>;
+} {
+  const surveys: Record<string, unknown> = {};
+  const intakes: Record<string, unknown> = {};
+  const operations: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(row)) {
+    if (INTAKE_SET.has(key)) intakes[key] = value;
+    else if (OPS_SET.has(key)) operations[key] = value;
+    else surveys[key] = value;
+  }
+  return { surveys, intakes, operations };
+}
+
 export const APPROVAL_OPTIONS = [
   { value: 'pending', label: '대기' },
   { value: 'approved', label: '승인' },
