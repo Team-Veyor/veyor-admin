@@ -5,10 +5,10 @@
     "env": {
       "NEXT_PUBLIC_SUPABASE_URL": "https://vqhpfoyylmtzeeewkkgz.supabase.co",
       "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_dXbUVSOrZ_MAFjTcB91d5w_vsLNqtqD",
-      "ADMIN_ALLOWLIST": "mingyu.shin@aicx.kr"
+      "ADMIN_ALLOWLIST": "mingyu.shin@aicx.kr,gaon111744@gmail.com"
     }
   },
   "env": {
-    "ADMIN_ALLOWLIST": "mingyu.shin@aicx.kr"
+    "ADMIN_ALLOWLIST": "mingyu.shin@aicx.kr,gaon111744@gmail.com"
   }
 }
