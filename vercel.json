@@ -4,7 +4,11 @@
   "build": {
     "env": {
       "NEXT_PUBLIC_SUPABASE_URL": "https://vqhpfoyylmtzeeewkkgz.supabase.co",
-      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_dXbUVSOrZ_MAFjTcB91d5w_vsLNqtqD"
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY": "sb_publishable_dXbUVSOrZ_MAFjTcB91d5w_vsLNqtqD",
+      "ADMIN_ALLOWLIST": "mingyu.shin@aicx.kr"
     }
+  },
+  "env": {
+    "ADMIN_ALLOWLIST": "mingyu.shin@aicx.kr"
   }
 }
