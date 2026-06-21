@@ -39,3 +39,25 @@ export function addOneDay(dateStr: unknown): string | null {
   const da = String(d.getUTCDate()).padStart(2, '0');
   return `${d.getUTCFullYear()}-${mo}-${da}`;
 }
+
+/**
+ * 게시일('YYYY-MM-DD') → 앱 노출 기간(오전 10시 KST 기준, 1일).
+ * - opens_at  = 게시일 10:00 KST
+ * - expires_at = 익일 10:00 KST
+ * 형식 오류 시 null.
+ */
+export function kstPublishWindow(date: unknown): { opens_at: string; expires_at: string } | null {
+  if (typeof date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(date.trim())) {
+    return null;
+  }
+  const day = date.trim();
+  const next = addOneDay(day);
+  if (!next) {
+    return null;
+  }
+  // 10:00 KST(+09:00) → UTC ISO
+  return {
+    opens_at: new Date(`${day}T10:00:00+09:00`).toISOString(),
+    expires_at: new Date(`${next}T10:00:00+09:00`).toISOString(),
+  };
+}

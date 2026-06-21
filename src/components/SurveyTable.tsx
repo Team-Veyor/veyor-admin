@@ -2,20 +2,25 @@
 
 import Link from 'next/link';
 import { useMemo, useState, useTransition } from 'react';
-import { deleteSurvey, updateSurveyField } from '@/app/actions/surveys';
+import {
+  deleteSurvey,
+  publishSurvey,
+  unpublishSurvey,
+  updateSurveyField,
+} from '@/app/actions/surveys';
 import {
   APPROVAL_OPTIONS,
+  completionUrl,
   SOURCE_LABEL,
   type SurveyFieldDef,
   type SurveyRow,
   TABLE_FIELDS,
 } from '@/lib/survey-fields';
 
-/** 테이블에서 바로 수정 가능한 컬럼(검토·승인·정산 운영 작업). */
+/** 테이블에서 바로 수정 가능한 컬럼(검토·승인·정산 운영 작업). 게시는 날짜 지정 버튼으로 처리. */
 const INLINE_EDITABLE = new Set<string>([
   'approval_status',
   'settlement_status',
-  'is_published',
   'pre_contact_done',
   'post_contact_done',
   'collected_responses',
@@ -31,7 +36,23 @@ const TH =
   'sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-12 py-12 text-left label-xsmall text-gray-500';
 const TD = 'border-b border-gray-100 px-12 py-12 align-middle';
 
+type Tab = 'all' | 'published';
+type SortDir = 'asc' | 'desc';
 type SaveFn = (id: string, column: string, value: string) => void;
+
+/** ISO(UTC) → KST 'YYYY-MM-DD HH:MM' */
+function fmtKst(iso: string | null): string {
+  if (!iso) {
+    return '—';
+  }
+  const d = new Date(new Date(iso).getTime() + 9 * 60 * 60 * 1000);
+  return d.toISOString().slice(0, 16).replace('T', ' ');
+}
+
+/** KST 기준 오늘 'YYYY-MM-DD' (게시 기본일) */
+function kstToday(): string {
+  return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
 
 function formatValue(field: SurveyFieldDef, value: unknown): string {
   if (value == null || value === '') {
@@ -151,16 +172,51 @@ function canDelete(row: SurveyRow): boolean {
   return !row.is_published && row.approval_status !== 'approved';
 }
 
+/** 정렬 비교(널은 항상 뒤로). */
+function compareBy(a: SurveyRow, b: SurveyRow, key: keyof SurveyRow, dir: SortDir): number {
+  const av = a[key];
+  const bv = b[key];
+  if (av == null && bv == null) {
+    return 0;
+  }
+  if (av == null) {
+    return 1;
+  }
+  if (bv == null) {
+    return -1;
+  }
+  let r: number;
+  if (typeof av === 'number' && typeof bv === 'number') {
+    r = av - bv;
+  } else if (typeof av === 'boolean' && typeof bv === 'boolean') {
+    r = (av ? 1 : 0) - (bv ? 1 : 0);
+  } else {
+    r = String(av).localeCompare(String(bv), 'ko');
+  }
+  return dir === 'asc' ? r : -r;
+}
+
 export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
+  const [tab, setTab] = useState<Tab>('all');
   const [approval, setApproval] = useState('all');
   const [source, setSource] = useState('all');
   const [query, setQuery] = useState('');
+  const [sortKey, setSortKey] = useState<keyof SurveyRow | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [publishingId, setPublishingId] = useState<string | null>(null);
+  const [publishDate, setPublishDate] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const filtered = useMemo(() => {
+  const publishedCount = useMemo(() => rows.filter((r) => r.is_published).length, [rows]);
+
+  const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return rows.filter((r) => {
+    const base = rows.filter((r) => {
+      if (tab === 'published' && !r.is_published) {
+        return false;
+      }
       if (approval !== 'all' && r.approval_status !== approval) {
         return false;
       }
@@ -176,7 +232,23 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
       }
       return true;
     });
-  }, [rows, approval, source, query]);
+    if (!sortKey) {
+      return base;
+    }
+    return [...base].sort((a, b) => compareBy(a, b, sortKey, sortDir));
+  }, [rows, tab, approval, source, query, sortKey, sortDir]);
+
+  const toggleSort = (key: keyof SurveyRow) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'));
+    } else {
+      setSortKey(key);
+      setSortDir('asc');
+    }
+  };
+
+  const sortMark = (key: keyof SurveyRow) =>
+    sortKey === key ? (sortDir === 'asc' ? ' ▲' : ' ▼') : '';
 
   const save: SaveFn = (id, column, value) => {
     setError(null);
@@ -201,10 +273,58 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
     });
   };
 
+  const openPublish = (r: SurveyRow) => {
+    setError(null);
+    setPublishingId(r.id);
+    setPublishDate(r.requested_publish_date?.slice(0, 10) ?? kstToday());
+  };
+
+  const confirmPublish = (id: string) => {
+    setError(null);
+    startTransition(async () => {
+      const res = await publishSurvey(id, publishDate);
+      if (res.ok) {
+        setPublishingId(null);
+      } else {
+        setError(res.error ?? '게시에 실패했습니다.');
+      }
+    });
+  };
+
+  const onUnpublish = (id: string, label: string) => {
+    if (!window.confirm(`'${label || '(제목 없음)'}' 게시를 취소할까요? 앱 노출이 내려갑니다.`)) {
+      return;
+    }
+    setError(null);
+    startTransition(async () => {
+      const res = await unpublishSurvey(id);
+      if (!res.ok) {
+        setError(res.error ?? '게시 취소에 실패했습니다.');
+      }
+    });
+  };
+
+  const copyLink = async (id: string) => {
+    try {
+      await navigator.clipboard.writeText(completionUrl(id));
+      setCopiedId(id);
+      window.setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 1500);
+    } catch {
+      setError('복사에 실패했습니다. 링크를 직접 선택해 복사해주세요.');
+    }
+  };
+
   const exportCsv = () => {
-    const header = ['출처', ...TABLE_FIELDS.map((c) => c.label)].map(csvCell).join(',');
-    const lines = filtered.map((r) =>
-      [SOURCE_LABEL[r.source], ...TABLE_FIELDS.map((c) => csvValue(c, r[c.column]))]
+    const extra = tab === 'published' ? ['게시일', '노출종료', '완료 인증 링크'] : [];
+    const header = ['출처', ...TABLE_FIELDS.map((c) => c.label), ...extra].map(csvCell).join(',');
+    const lines = visible.map((r) =>
+      [
+        SOURCE_LABEL[r.source],
+        ...TABLE_FIELDS.map((c) => csvValue(c, r[c.column])),
+        ...(tab === 'published'
+          ? [fmtKst(r.opens_at), fmtKst(r.expires_at), completionUrl(r.id)]
+          : []),
+      ]
         .map(csvCell)
         .join(','),
     );
@@ -213,13 +333,32 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `veyor-surveys-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `veyor-surveys-${tab}-${kstToday()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
+  const TabBtn = ({ value, label, count }: { value: Tab; label: string; count: number }) => (
+    <button
+      type='button'
+      onClick={() => setTab(value)}
+      className={`rounded-16 px-16 py-[10px] label-small transition-colors ${
+        tab === value ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+      }`}
+    >
+      {label} <span className='opacity-70'>{count}</span>
+    </button>
+  );
+
+  const colCount = TABLE_FIELDS.length + 1 + (tab === 'published' ? 3 : 0);
+
   return (
     <>
+      <div className='mb-12 flex items-center gap-8'>
+        <TabBtn value='all' label='모든 설문' count={rows.length} />
+        <TabBtn value='published' label='등록된 설문' count={publishedCount} />
+      </div>
+
       <div className='mb-16 flex flex-wrap items-center gap-8'>
         <select value={approval} onChange={(e) => setApproval(e.target.value)} className={TOOL}>
           <option value='all'>승인: 전체</option>
@@ -242,7 +381,8 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
           className={`${TOOL} w-[240px]`}
         />
         <span className='body-small text-gray-500'>
-          {filtered.length} / {rows.length}건{pending ? ' · 저장 중…' : ''}
+          {visible.length} / {tab === 'published' ? publishedCount : rows.length}건
+          {pending ? ' · 저장 중…' : ''}
         </span>
         <span className='flex-1' />
         <button
@@ -260,61 +400,147 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
         </p>
       )}
 
-      <div className='scrollbar-custom max-h-[calc(100vh-280px)] overflow-auto rounded-20 border border-gray-200 bg-white shadow-card'>
+      <div className='scrollbar-custom max-h-[calc(100vh-300px)] overflow-auto rounded-20 border border-gray-200 bg-white shadow-card'>
         <table className='w-full border-separate border-spacing-0 whitespace-nowrap body-small'>
           <thead>
             <tr>
               <th className={`${TH} sticky left-0 z-20 border-r`}>관리</th>
               {TABLE_FIELDS.map((f) => (
-                <th key={f.column as string} className={TH}>
+                <th
+                  key={f.column as string}
+                  className={`${TH} cursor-pointer select-none`}
+                  onClick={() => toggleSort(f.column)}
+                >
                   {f.label}
+                  {sortMark(f.column)}
                 </th>
               ))}
+              {tab === 'published' && (
+                <>
+                  <th
+                    className={`${TH} cursor-pointer select-none`}
+                    onClick={() => toggleSort('opens_at')}
+                  >
+                    게시일{sortMark('opens_at')}
+                  </th>
+                  <th
+                    className={`${TH} cursor-pointer select-none`}
+                    onClick={() => toggleSort('expires_at')}
+                  >
+                    노출종료{sortMark('expires_at')}
+                  </th>
+                  <th className={TH}>완료 인증 링크</th>
+                </>
+              )}
             </tr>
           </thead>
           <tbody>
-            {filtered.map((r) => {
+            {visible.map((r) => {
               const deletable = canDelete(r);
+              const isPublishing = publishingId === r.id;
               return (
                 <tr key={r.id} className='transition-colors hover:bg-gray-50'>
                   <td className={`${TD} sticky left-0 z-10 border-r border-gray-200 bg-white`}>
-                    <div className='flex gap-4'>
-                      <Link
-                        href={`/surveys/${r.id}`}
-                        className='inline-flex items-center rounded-12 bg-gray-100 px-12 py-[6px] label-small text-gray-600 transition-colors hover:bg-gray-200'
-                      >
-                        수정
-                      </Link>
-                      {deletable ? (
+                    {isPublishing ? (
+                      <div className='flex items-center gap-4'>
+                        <input
+                          type='date'
+                          value={publishDate}
+                          onChange={(e) => setPublishDate(e.target.value)}
+                          className='rounded-8 border border-gray-200 px-8 py-[6px] body-small'
+                        />
                         <button
                           type='button'
-                          onClick={() => onDelete(r.id, r.topic ?? r.title)}
-                          className='inline-flex items-center rounded-12 bg-red-50 px-12 py-[6px] label-small text-red-500 transition-colors hover:bg-red-100'
+                          onClick={() => confirmPublish(r.id)}
+                          disabled={pending}
+                          className='inline-flex items-center rounded-12 bg-brand-500 px-12 py-[6px] label-small text-white transition-colors hover:bg-brand-600 disabled:opacity-50'
                         >
-                          삭제
+                          확인
                         </button>
-                      ) : (
-                        <span
-                          title='게시 중이거나 승인된 설문은 삭제할 수 없습니다.'
-                          className='inline-flex cursor-not-allowed items-center rounded-12 bg-gray-50 px-12 py-[6px] label-small text-gray-300'
+                        <button
+                          type='button'
+                          onClick={() => setPublishingId(null)}
+                          className='inline-flex items-center rounded-12 bg-gray-100 px-12 py-[6px] label-small text-gray-500 transition-colors hover:bg-gray-200'
                         >
-                          삭제
-                        </span>
-                      )}
-                    </div>
+                          취소
+                        </button>
+                      </div>
+                    ) : (
+                      <div className='flex gap-4'>
+                        <Link
+                          href={`/surveys/${r.id}`}
+                          className='inline-flex items-center rounded-12 bg-gray-100 px-12 py-[6px] label-small text-gray-600 transition-colors hover:bg-gray-200'
+                        >
+                          수정
+                        </Link>
+                        {r.is_published ? (
+                          <button
+                            type='button'
+                            onClick={() => onUnpublish(r.id, r.title)}
+                            className='inline-flex items-center rounded-12 bg-amber-50 px-12 py-[6px] label-small text-amber-600 transition-colors hover:bg-amber-100'
+                          >
+                            게시취소
+                          </button>
+                        ) : (
+                          <button
+                            type='button'
+                            onClick={() => openPublish(r)}
+                            className='inline-flex items-center rounded-12 bg-brand-50 px-12 py-[6px] label-small text-brand transition-colors hover:bg-brand-100'
+                          >
+                            게시
+                          </button>
+                        )}
+                        {deletable && (
+                          <button
+                            type='button'
+                            onClick={() => onDelete(r.id, r.topic ?? r.title)}
+                            className='inline-flex items-center rounded-12 bg-red-50 px-12 py-[6px] label-small text-red-500 transition-colors hover:bg-red-100'
+                          >
+                            삭제
+                          </button>
+                        )}
+                      </div>
+                    )}
                   </td>
                   {TABLE_FIELDS.map((f) => (
                     <td key={f.column as string} className={TD}>
                       {renderCell(r, f, save)}
                     </td>
                   ))}
+                  {tab === 'published' && (
+                    <>
+                      <td className={TD}>
+                        <span className='text-gray-800'>{fmtKst(r.opens_at)}</span>
+                      </td>
+                      <td className={TD}>
+                        <span className='text-gray-500'>{fmtKst(r.expires_at)}</span>
+                      </td>
+                      <td className={TD}>
+                        <div className='flex items-center gap-6'>
+                          <button
+                            type='button'
+                            onClick={() => copyLink(r.id)}
+                            className='inline-flex items-center rounded-12 bg-gray-100 px-12 py-[6px] label-small text-gray-700 transition-colors hover:bg-gray-200'
+                          >
+                            {copiedId === r.id ? '복사됨 ✓' : '링크 복사'}
+                          </button>
+                          <span
+                            className='inline-block max-w-[260px] truncate text-gray-400'
+                            title={completionUrl(r.id)}
+                          >
+                            {completionUrl(r.id)}
+                          </span>
+                        </div>
+                      </td>
+                    </>
+                  )}
                 </tr>
               );
             })}
-            {filtered.length === 0 && (
+            {visible.length === 0 && (
               <tr>
                 <td
-                  colSpan={TABLE_FIELDS.length + 1}
+                  colSpan={colCount}
                   className='px-12 py-32 text-center body-medium text-gray-400'
                 >
                   설문이 없습니다.

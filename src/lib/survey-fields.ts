@@ -425,15 +425,20 @@ export const PUBLISH_FIELDS: SurveyFieldDef[] = [
     inIntake: false,
     placeholder: '예: 2005',
   },
-  { column: 'opens_at', label: '노출 시작', kind: 'datetime', owner: 'operator', inIntake: false },
-  {
-    column: 'expires_at',
-    label: '노출 종료',
-    kind: 'datetime',
-    owner: 'operator',
-    inIntake: false,
-  },
+  // 노출 기간(opens_at·expires_at)은 폼에서 직접 입력하지 않는다.
+  // "게시" 시 단일 날짜를 받아 오전 10시 KST 기준 1일로 자동 설정(publishSurvey).
 ];
+
+/** 앱 베이스 도메인 — 완료 인증 링크 등에 사용. */
+export const APP_BASE_URL = process.env.NEXT_PUBLIC_APP_BASE_URL ?? 'https://bsg.io.kr';
+
+/**
+ * 설문 완료 인증 링크. 운영자가 외부 설문 마지막 페이지에 붙여넣어,
+ * 응답자가 이 주소로 복귀하면 완료가 인증된다.
+ */
+export function completionUrl(surveyId: string): string {
+  return `${APP_BASE_URL}/surveys/${surveyId}/complete`;
+}
 
 /** 관리 테이블 컬럼 순서(엑셀 느낌): 상태 → 접수 → 운영. */
 export const TABLE_FIELDS: SurveyFieldDef[] = [

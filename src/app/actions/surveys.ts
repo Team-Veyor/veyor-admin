@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { ActionState } from '@/lib/action-state';
-import { addOneDay, coerceValue } from '@/lib/coerce';
+import { addOneDay, coerceValue, kstPublishWindow } from '@/lib/coerce';
 import { requireOperator } from '@/lib/guard';
 import { getAdminClient } from '@/lib/supabase/admin';
 import {
@@ -175,6 +175,58 @@ export async function deleteSurvey(id: string): Promise<{ ok: boolean; error?: s
     return { ok: false, error: '게시 중이거나 승인된 설문은 삭제할 수 없습니다.' };
   }
   const { error } = await supabase.from('surveys').delete().eq('id', id);
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+  revalidatePath('/');
+  return { ok: true };
+}
+
+/**
+ * 게시(운영자). 단일 날짜 → 앱 노출 기간 확정(오전 10시 KST, 1일).
+ * opens_at/expires_at 설정 + is_published=true + approval_status=approved.
+ * 게시되면 앱 `/surveys/today` 노출 + 완료 인증 링크가 유효해진다.
+ */
+export async function publishSurvey(
+  id: string,
+  date: string,
+): Promise<{ ok: boolean; error?: string }> {
+  await requireOperator();
+  const window = kstPublishWindow(date);
+  if (!window) {
+    return { ok: false, error: '게시일(YYYY-MM-DD)을 올바르게 선택해주세요.' };
+  }
+  const supabase = getAdminClient();
+  // 게시 전 앱 노출 필수값 확인
+  const { data: target } = await supabase
+    .from('surveys')
+    .select('title, external_url, reward_amount')
+    .eq('id', id)
+    .maybeSingle();
+  if (!target?.title || !target?.external_url) {
+    return { ok: false, error: '노출 제목과 설문 링크가 있어야 게시할 수 있습니다.' };
+  }
+  const { error } = await supabase
+    .from('surveys')
+    .update({
+      opens_at: window.opens_at,
+      expires_at: window.expires_at,
+      is_published: true,
+      approval_status: 'approved',
+    })
+    .eq('id', id);
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+  revalidatePath('/');
+  return { ok: true };
+}
+
+/** 게시 취소(운영자). 앱 노출만 내린다(데이터·기간 값은 유지). */
+export async function unpublishSurvey(id: string): Promise<{ ok: boolean; error?: string }> {
+  await requireOperator();
+  const supabase = getAdminClient();
+  const { error } = await supabase.from('surveys').update({ is_published: false }).eq('id', id);
   if (error) {
     return { ok: false, error: error.message };
   }
