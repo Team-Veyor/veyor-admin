@@ -172,8 +172,6 @@ export const GENDER_OPTIONS = [
   { value: 'female', label: '여성' },
 ];
 
-// 직업 코드: veyor-app 백엔드(onboarding.dto OCCUPATIONS)·DB와 동일한 영문 코드 저장, 표시는 한글 라벨.
-// (중학생·고등학생은 백엔드에서 school_student로 병합됨)
 export const OCCUPATION_OPTIONS = [
   { value: '', label: '전체' },
   { value: 'school_student', label: '중·고등학생' },
