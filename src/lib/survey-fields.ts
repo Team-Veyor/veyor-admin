@@ -174,13 +174,17 @@ export const GENDER_OPTIONS = [
 
 export const OCCUPATION_OPTIONS = [
   { value: '', label: '전체' },
-  { value: '중학생', label: '중학생' },
-  { value: '고등학생', label: '고등학생' },
-  { value: '대학생', label: '대학생' },
-  { value: '직장인', label: '직장인' },
-  { value: '무직', label: '무직' },
-  { value: '주부', label: '주부' },
-  { value: '기타', label: '기타' },
+  { value: 'school_student', label: '중·고등학생' },
+  { value: 'college_student', label: '대학생' },
+  { value: 'graduate_student', label: '대학원생' },
+  { value: 'job_seeker', label: '취업 준비생' },
+  { value: 'office_worker', label: '직장인' },
+  { value: 'freelancer', label: '프리랜서' },
+  { value: 'self_employed', label: '자영업자' },
+  { value: 'homemaker', label: '주부' },
+  { value: 'unemployed', label: '무직' },
+  { value: 'retired', label: '은퇴' },
+  { value: 'other', label: '기타' },
 ];
 
 export const SOURCE_LABEL: Record<SurveyRow['source'], string> = {
