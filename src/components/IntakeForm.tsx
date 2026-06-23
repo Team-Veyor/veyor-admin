@@ -1,9 +1,10 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useState } from 'react';
 import { submitIntake } from '@/app/actions/intake';
 import { SubmitButton } from '@/components/SubmitButton';
 import type { ActionState } from '@/lib/action-state';
+import { byteLength } from '@/lib/coerce';
 import { INTAKE_FIELDS, type SurveyFieldDef } from '@/lib/survey-fields';
 
 // veyor 입력 스타일: 둥근 채움 박스 + 포커스 시 진한 보더
@@ -69,7 +70,43 @@ function QuestionControl({ field }: { field: SurveyFieldDef }) {
   if (field.kind === 'url') {
     return <input type='url' name={name} placeholder='https://' className={FIELD} />;
   }
+  if (field.maxBytes) {
+    return <ByteLimitedInput name={name} maxBytes={field.maxBytes} />;
+  }
   return <input type='text' name={name} placeholder='입력해 주세요' className={FIELD} />;
+}
+
+/** 바이트 길이 제한 텍스트 입력(예: 제목 80byte). 입력 중 한도를 넘는 분량은 잘라낸다. */
+function ByteLimitedInput({ name, maxBytes }: { name: string; maxBytes: number }) {
+  const [value, setValue] = useState('');
+  const truncate = (s: string) => {
+    if (byteLength(s) <= maxBytes) {
+      return s;
+    }
+    let out = '';
+    for (const ch of s) {
+      if (byteLength(out + ch) > maxBytes) {
+        break;
+      }
+      out += ch;
+    }
+    return out;
+  };
+  return (
+    <div>
+      <input
+        type='text'
+        name={name}
+        value={value}
+        onChange={(e) => setValue(truncate(e.target.value))}
+        placeholder='입력해 주세요'
+        className={FIELD}
+      />
+      <p className='mt-4 text-right body-small text-gray-400'>
+        {byteLength(value)} / {maxBytes} byte
+      </p>
+    </div>
+  );
 }
 
 function QuestionCard({ index, field }: { index: number; field: SurveyFieldDef }) {

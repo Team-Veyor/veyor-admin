@@ -23,7 +23,12 @@ const INLINE_EDITABLE = new Set<string>([
   'settlement_status',
   'pre_contact_done',
   'post_contact_done',
-  'collected_responses',
+  // #10 바로(인라인) 수정 대상. 확보응답(collected_responses)은 #6 자동집계라 읽기 전용으로 제외.
+  'target_description',
+  'requested_publish_date',
+  'pre_contact_reply',
+  'post_contact_reply',
+  'reward_budget',
 ]);
 
 const CELL_EDIT =
@@ -118,6 +123,24 @@ function renderCell(row: SurveyRow, field: SurveyFieldDef, save: SaveFn) {
         />
       );
     }
+    if (field.kind === 'date') {
+      return (
+        <input
+          className={CELL_EDIT}
+          type='date'
+          defaultValue={value ? String(value).slice(0, 10) : ''}
+          onChange={(e) => save(row.id, col, e.target.value)}
+        />
+      );
+    }
+    return (
+      <input
+        className={CELL_EDIT}
+        type='text'
+        defaultValue={value == null ? '' : String(value)}
+        onBlur={(e) => save(row.id, col, e.target.value)}
+      />
+    );
   }
 
   if (field.kind === 'url' && value) {
@@ -170,6 +193,34 @@ function csvValue(field: SurveyFieldDef, value: unknown): string {
 /** 삭제 가능 여부: 게시 중이거나 승인된 설문은 삭제 불가. */
 function canDelete(row: SurveyRow): boolean {
   return !row.is_published && row.approval_status !== 'approved';
+}
+
+/** #11 기본 자동 정렬 1순위: 승인여부(승인→대기→회신안함→반려). */
+const APPROVAL_ORDER: Record<string, number> = {
+  approved: 0,
+  pending: 1,
+  no_reply: 2,
+  rejected: 3,
+};
+
+/** #11 기본 정렬: 승인여부 → 게시일 최신 → 접수일 최신. (헤더 클릭 정렬이 없을 때 적용) */
+function defaultCompare(a: SurveyRow, b: SurveyRow): number {
+  const ao = APPROVAL_ORDER[a.approval_status] ?? 99;
+  const bo = APPROVAL_ORDER[b.approval_status] ?? 99;
+  if (ao !== bo) {
+    return ao - bo;
+  }
+  const ap = a.requested_publish_date ?? '';
+  const bp = b.requested_publish_date ?? '';
+  if (ap !== bp) {
+    return ap < bp ? 1 : -1; // 게시일 최신순(desc)
+  }
+  const ac = a.created_at ?? '';
+  const bc = b.created_at ?? '';
+  if (ac !== bc) {
+    return ac < bc ? 1 : -1; // 접수일 최신순(desc)
+  }
+  return 0;
 }
 
 /** 정렬 비교(널은 항상 뒤로). */
@@ -233,7 +284,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
       return true;
     });
     if (!sortKey) {
-      return base;
+      return [...base].sort(defaultCompare);
     }
     return [...base].sort((a, b) => compareBy(a, b, sortKey, sortDir));
   }, [rows, tab, approval, source, query, sortKey, sortDir]);

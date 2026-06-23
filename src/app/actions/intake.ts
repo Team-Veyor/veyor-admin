@@ -2,7 +2,7 @@
 
 import { redirect } from 'next/navigation';
 import type { ActionState } from '@/lib/action-state';
-import { addOneDay, coerceValue } from '@/lib/coerce';
+import { byteLength, coerceValue } from '@/lib/coerce';
 import { getAdminClient } from '@/lib/supabase/admin';
 import { INTAKE_FIELDS, splitByTable } from '@/lib/survey-fields';
 
@@ -22,6 +22,13 @@ export async function submitIntake(_prev: ActionState, formData: FormData): Prom
   if (missing.length > 0) {
     return { error: `필수 항목을 입력해주세요: ${missing.map((m) => m.label).join(', ')}` };
   }
+  // 바이트 길이 제한(예: 제목 80byte) 검증
+  const tooLong = INTAKE_FIELDS.find(
+    (f) => f.maxBytes != null && byteLength(get(f.column as string)) > f.maxBytes,
+  );
+  if (tooLong) {
+    return { error: `${tooLong.label}은(는) ${tooLong.maxBytes}바이트 이내로 입력해주세요.` };
+  }
 
   const flat: Record<string, unknown> = {
     source: 'intake',
@@ -31,11 +38,10 @@ export async function submitIntake(_prev: ActionState, formData: FormData): Prom
   for (const field of INTAKE_FIELDS) {
     flat[field.column as string] = coerceValue(get(field.column as string), field.kind);
   }
-  // NOT NULL 충족: title=주제, reward_amount=0(승인 시 운영자 확정). external_url·target_occupation 은 surveys 컬럼.
+  // NOT NULL 충족: title=제목(topic), reward_amount=0(승인 시 운영자 확정).
+  // 마감일(deadline)은 폼에서 직접 입력받고, 게시일(requested_publish_date)은 운영자가 게시 시 지정한다.
   flat.title = get('topic') || '(제목 미정)';
   flat.reward_amount = 0;
-  // 마감일 = 게시일 + 1일 (자동)
-  flat.deadline = addOneDay(flat.requested_publish_date);
 
   const { surveys, intakes } = splitByTable(flat);
   const supabase = getAdminClient();

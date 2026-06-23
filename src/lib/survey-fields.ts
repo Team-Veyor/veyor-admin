@@ -41,13 +41,15 @@ export interface SurveyFieldDef {
   hint?: string;
   /** 입력칸 placeholder(예시값) */
   placeholder?: string;
+  /** 접수 폼 입력값 최대 바이트 수(텍스트 길이 제한). */
+  maxBytes?: number;
 }
 
 /** surveys 테이블 한 행의 전체 형태(마이그레이션 반영). */
 export interface SurveyRow {
   id: string;
   // 워크플로 상태
-  approval_status: 'pending' | 'approved' | 'rejected';
+  approval_status: 'pending' | 'approved' | 'no_reply' | 'rejected';
   is_published: boolean;
   source: 'manual' | 'intake';
   // 고객 접수 항목
@@ -157,6 +159,7 @@ export function splitByTable(row: Record<string, unknown>): {
 export const APPROVAL_OPTIONS = [
   { value: 'pending', label: '대기' },
   { value: 'approved', label: '승인' },
+  { value: 'no_reply', label: '회신안함' },
   { value: 'rejected', label: '반려' },
 ];
 
@@ -198,46 +201,49 @@ export const SOURCE_LABEL: Record<SurveyRow['source'], string> = {
 export const INTAKE_FIELDS: SurveyFieldDef[] = [
   {
     column: 'topic',
-    label: '주제',
+    label: '제목',
     kind: 'text',
     owner: 'customer',
     inIntake: true,
     requiredInIntake: true,
+    maxBytes: 80,
     hint: '설문 주제를 입력해주세요.',
   },
   {
-    column: 'target_description',
-    label: '대상',
-    kind: 'textarea',
-    owner: 'customer',
-    inIntake: true,
-    requiredInIntake: true,
-    hint: '설문 대상(연령/성별/특성 등)을 자유롭게 적어주세요.',
-  },
-  {
-    column: 'target_occupation',
-    label: '직업',
-    kind: 'select',
-    owner: 'customer',
-    inIntake: true,
-    options: OCCUPATION_OPTIONS,
-    hint: '설문 대상의 직업군을 선택해주세요.',
-  },
-  {
-    column: 'requested_publish_date',
-    label: '게시일',
+    column: 'deadline',
+    label: '마감일',
     kind: 'date',
     owner: 'customer',
     inIntake: true,
-    hint: '설문을 게시할 날짜입니다. 마감일은 게시일 다음 날로 자동 설정됩니다.',
+    requiredInIntake: true,
+    hint: '설문은 접수일 다음 날부터 설정하신 마감일 사이의 기간 중, 운영진이 지정한 하루(오전 10시~24시간) 동안 게시됩니다. 마감일을 넉넉히 설정하실수록 게시 가능 확률이 올라갑니다.',
   },
   {
-    column: 'suggested_amount',
-    label: '적정 금액',
-    kind: 'money',
+    column: 'target_respondents',
+    label: '설문 목표 응답수',
+    kind: 'number',
     owner: 'customer',
     inIntake: true,
-    hint: '1인당 적정 리워드 금액(원).',
+    requiredInIntake: true,
+    hint: '설문의 목표 응답수는 몇 개인가요?',
+  },
+  {
+    column: 'paid_recruit_count',
+    label: '백설기 목표 응답수',
+    kind: 'number',
+    owner: 'customer',
+    inIntake: true,
+    requiredInIntake: true,
+    hint: '이 서비스를 통해 몇 개의 응답수를 확보하고 싶으신가요?',
+  },
+  {
+    column: 'reward_budget',
+    label: '설문 참여 보상 예산',
+    kind: 'text',
+    owner: 'customer',
+    inIntake: true,
+    requiredInIntake: true,
+    hint: '참여 보상 예산이 있었나요? 목표 인원에 대한 리워드 예산은 얼마로 설정하셨나요? 예) 스타벅스 기프티콘 5명 20,000원 (없으면 ‘없음’으로 작성)',
   },
   {
     column: 'external_url',
@@ -249,45 +255,22 @@ export const INTAKE_FIELDS: SurveyFieldDef[] = [
     hint: '설문조사 링크를 붙여주세요.',
   },
   {
+    column: 'interview_consent',
+    label: '인터뷰 동의',
+    kind: 'boolean',
+    owner: 'customer',
+    inIntake: true,
+    requiredInIntake: true,
+    hint: '모집 종료 후 만족도 조사를 위한 3분 전화 인터뷰에 동의하시나요?',
+  },
+  {
     column: 'contact',
     label: '연락처',
     kind: 'text',
     owner: 'customer',
     inIntake: true,
     requiredInIntake: true,
-    hint: '전화번호, 이메일, 카카오톡 아이디 등',
-  },
-  {
-    column: 'target_respondents',
-    label: '목표 인원',
-    kind: 'number',
-    owner: 'customer',
-    inIntake: true,
-    hint: '설문 목표 인원은 몇 명인가요?',
-  },
-  {
-    column: 'interview_consent',
-    label: '인터뷰 동의',
-    kind: 'boolean',
-    owner: 'customer',
-    inIntake: true,
-    hint: '모집 종료 후 만족도 조사를 위한 3분 전화 인터뷰에 동의하시나요?',
-  },
-  {
-    column: 'reward_budget',
-    label: '리워드 예산',
-    kind: 'text',
-    owner: 'customer',
-    inIntake: true,
-    hint: '예) 스타벅스 기프티콘 5명 20,000원',
-  },
-  {
-    column: 'paid_recruit_count',
-    label: '유료 모집 인원',
-    kind: 'number',
-    owner: 'customer',
-    inIntake: true,
-    hint: '이 서비스를 통해 몇 명을 모집하고 싶으신가요?(유료)',
+    hint: '전화번호, 이메일 등. 연락처 미기재시 설문 게시가 불가능합니다.',
   },
 ];
 
@@ -309,6 +292,32 @@ export const OPERATOR_FIELDS: SurveyFieldDef[] = [
     kind: 'boolean',
     owner: 'operator',
     inIntake: false,
+  },
+  {
+    column: 'requested_publish_date',
+    label: '게시일',
+    kind: 'date',
+    owner: 'operator',
+    inIntake: false,
+    hint: '운영진이 지정하는 게시 예정일(접수일 다음 날 ~ 마감일 사이). 게시 시 이 날짜 오전 10시에 노출됩니다.',
+  },
+  {
+    // 접수폼에서 제거(#13). 운영자가 검토/보정하며 채우는 항목으로 유지(관리표 인라인 수정 대상).
+    column: 'target_description',
+    label: '대상',
+    kind: 'text',
+    owner: 'operator',
+    inIntake: false,
+    hint: '설문 대상(연령/성별/특성 등). 운영자가 검토하며 보정합니다.',
+  },
+  {
+    // 접수폼에서 제거(#5, "적정 금액은 운영 측에서 측정"). 운영자가 입력.
+    column: 'suggested_amount',
+    label: '적정 금액',
+    kind: 'money',
+    owner: 'operator',
+    inIntake: false,
+    hint: '운영자가 측정한 1인당 적정 리워드 금액(원).',
   },
   {
     column: 'pre_contact_done',
@@ -447,69 +456,25 @@ export function completionUrl(surveyId: string): string {
 /** 관리 테이블 컬럼 순서(엑셀 느낌): 상태 → 접수 → 운영. */
 export const TABLE_FIELDS: SurveyFieldDef[] = [
   ...OPERATOR_FIELDS.filter((f) => f.column === 'approval_status' || f.column === 'is_published'),
-  { column: 'topic', label: '주제', kind: 'text', owner: 'customer', inIntake: true },
-  { column: 'title', label: '노출 제목', kind: 'text', owner: 'operator', inIntake: false },
-  { column: 'target_description', label: '대상', kind: 'text', owner: 'customer', inIntake: true },
-  {
-    column: 'target_occupation',
-    label: '직업',
-    kind: 'select',
-    owner: 'customer',
-    inIntake: true,
-    options: OCCUPATION_OPTIONS,
-  },
-  {
-    column: 'requested_publish_date',
-    label: '게시일',
-    kind: 'date',
-    owner: 'customer',
-    inIntake: true,
-  },
-  { column: 'deadline', label: '마감일(자동)', kind: 'date', owner: 'customer', inIntake: true },
-  {
-    column: 'reward_amount',
-    label: '리워드(확정)',
-    kind: 'money',
-    owner: 'operator',
-    inIntake: false,
-  },
+  { column: 'topic', label: '제목', kind: 'text', owner: 'customer', inIntake: true },
+  { column: 'target_description', label: '대상', kind: 'text', owner: 'operator', inIntake: false },
   {
     column: 'suggested_amount',
     label: '적정 금액',
     kind: 'money',
-    owner: 'customer',
-    inIntake: true,
+    owner: 'operator',
+    inIntake: false,
   },
+  { column: 'deadline', label: '마감일', kind: 'date', owner: 'customer', inIntake: true },
   {
-    column: 'reward_budget',
-    label: '리워드 예산',
-    kind: 'text',
-    owner: 'customer',
-    inIntake: true,
+    column: 'requested_publish_date',
+    label: '게시일',
+    kind: 'date',
+    owner: 'operator',
+    inIntake: false,
   },
   { column: 'external_url', label: '설문 링크', kind: 'url', owner: 'customer', inIntake: true },
   { column: 'contact', label: '연락처', kind: 'text', owner: 'customer', inIntake: true },
-  {
-    column: 'target_respondents',
-    label: '목표 인원',
-    kind: 'number',
-    owner: 'customer',
-    inIntake: true,
-  },
-  {
-    column: 'paid_recruit_count',
-    label: '유료 모집',
-    kind: 'number',
-    owner: 'customer',
-    inIntake: true,
-  },
-  {
-    column: 'interview_consent',
-    label: '인터뷰 동의',
-    kind: 'boolean',
-    owner: 'customer',
-    inIntake: true,
-  },
   {
     column: 'pre_contact_done',
     label: '게시 전 연락',
@@ -552,5 +517,33 @@ export const TABLE_FIELDS: SurveyFieldDef[] = [
     owner: 'operator',
     inIntake: false,
     options: SETTLEMENT_OPTIONS,
+  },
+  {
+    column: 'target_respondents',
+    label: '목표 인원',
+    kind: 'number',
+    owner: 'customer',
+    inIntake: true,
+  },
+  {
+    column: 'paid_recruit_count',
+    label: '유료 모집',
+    kind: 'number',
+    owner: 'customer',
+    inIntake: true,
+  },
+  {
+    column: 'reward_budget',
+    label: '리워드 예산',
+    kind: 'text',
+    owner: 'customer',
+    inIntake: true,
+  },
+  {
+    column: 'interview_consent',
+    label: '인터뷰 동의',
+    kind: 'boolean',
+    owner: 'customer',
+    inIntake: true,
   },
 ];

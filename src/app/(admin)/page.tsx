@@ -37,7 +37,26 @@ export default async function SurveysPage() {
     .order('created_at', { ascending: false })
     .limit(1000);
 
-  const rows = ((data ?? []) as Record<string, unknown>[]).map(flattenSurvey);
+  // #6 확보 응답 자동 집계: participations 완료수를 survey_id별로 세어 collected_responses에 주입(읽기 전용).
+  // 대량 시 group-by RPC/뷰로 대체 권장. 현재는 완료 참여 전체를 한 번에 읽어 JS로 집계.
+  const { data: completed, error: completedError } = await supabase
+    .from('participations')
+    .select('survey_id')
+    .eq('status', 'completed');
+  const completedCount = new Map<string, number>();
+  if (!completedError) {
+    for (const p of (completed ?? []) as { survey_id: string }[]) {
+      completedCount.set(p.survey_id, (completedCount.get(p.survey_id) ?? 0) + 1);
+    }
+  }
+
+  const rows = ((data ?? []) as Record<string, unknown>[]).map((row) => {
+    const r = flattenSurvey(row);
+    if (!completedError) {
+      r.collected_responses = completedCount.get(r.id) ?? 0;
+    }
+    return r;
+  });
 
   return (
     <>

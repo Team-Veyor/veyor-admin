@@ -24,7 +24,12 @@ export function coerceValue(raw: string, kind: FieldKind): unknown {
   }
 }
 
-/** 'YYYY-MM-DD' 다음 날 문자열 반환(게시일+1=마감일 자동 계산). 빈 값/형식 오류 시 null. */
+/** 문자열의 UTF-8 바이트 길이(한글 1자 = 3바이트). 접수 폼 글자수 제한 검증용. */
+export function byteLength(s: string): number {
+  return new TextEncoder().encode(s ?? '').length;
+}
+
+/** 'YYYY-MM-DD' 다음 날 문자열 반환. 빈 값/형식 오류 시 null. (게시 노출 기간 계산 kstPublishWindow용) */
 export function addOneDay(dateStr: unknown): string | null {
   if (typeof dateStr !== 'string') {
     return null;

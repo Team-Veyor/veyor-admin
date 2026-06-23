@@ -11,6 +11,7 @@ export const dynamic = 'force-dynamic';
 const APPROVAL_BADGE = {
   approved: { type: 'brand', label: '승인' },
   pending: { type: 'warning', label: '대기' },
+  no_reply: { type: 'default', label: '회신안함' },
   rejected: { type: 'danger', label: '반려' },
 } as const;
 

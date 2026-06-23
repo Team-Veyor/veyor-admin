@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 import type { ActionState } from '@/lib/action-state';
-import { addOneDay, coerceValue, kstPublishWindow } from '@/lib/coerce';
+import { coerceValue, kstPublishWindow } from '@/lib/coerce';
 import { requireOperator } from '@/lib/guard';
 import { getAdminClient } from '@/lib/supabase/admin';
 import {
@@ -39,10 +39,7 @@ function buildRow(formData: FormData): Record<string, unknown> {
   if (row.opens_at === null) {
     delete row.opens_at; // NOT NULL + default now()
   }
-  // 마감일 = 게시일 + 1일 (자동)
-  if ('requested_publish_date' in row) {
-    row.deadline = addOneDay(row.requested_publish_date);
-  }
+  // 마감일(deadline)은 고객이 접수폼에서 직접 입력한다(과거 게시일+1 자동계산 제거).
   return row;
 }
 
