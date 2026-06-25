@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
+import { MessageTemplates } from '@/components/MessageTemplates';
 import { SurveyDeleteButton } from '@/components/SurveyDeleteButton';
 import { SurveyForm } from '@/components/SurveyForm';
 import Badge from '@/components/ui/Badge';
+import { buildMessages } from '@/lib/message-templates';
 import { getAdminClient } from '@/lib/supabase/admin';
 import { flattenSurvey, SURVEY_SELECT } from '@/lib/survey-fields';
 
@@ -25,6 +27,14 @@ export default async function EditSurveyPage({ params }: { params: Promise<{ id:
   const survey = flattenSurvey(data as Record<string, unknown>);
   const badge = APPROVAL_BADGE[survey.approval_status];
   const canDelete = !survey.is_published && survey.approval_status !== 'approved';
+
+  // 안내 메시지의 collected_responses/total_payment 변수용 실제 완료 참여수.
+  const { count } = await supabase
+    .from('participations')
+    .select('id', { count: 'exact', head: true })
+    .eq('survey_id', id)
+    .eq('status', 'completed');
+  const messages = buildMessages(survey, count ?? 0);
 
   return (
     <>
@@ -55,6 +65,7 @@ export default async function EditSurveyPage({ params }: { params: Promise<{ id:
         />
       </div>
       <SurveyForm mode='edit' survey={survey} />
+      <MessageTemplates messages={messages} />
     </>
   );
 }

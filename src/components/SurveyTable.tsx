@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useMemo, useState, useTransition } from 'react';
+import { useEffect, useMemo, useState, useTransition } from 'react';
 import {
   deleteSurvey,
   publishSurvey,
@@ -29,6 +29,10 @@ const INLINE_EDITABLE = new Set<string>([
   'pre_contact_reply',
   'post_contact_reply',
   'reward_budget',
+  // 적정 금액(리워드): 운영자가 관리표에서 바로 수정.
+  'suggested_amount',
+  // 운영 메모: 요청자 통화 내용/요구사항을 표에서 바로 기록.
+  'admin_note',
 ]);
 
 const CELL_EDIT =
@@ -223,6 +227,22 @@ function defaultCompare(a: SurveyRow, b: SurveyRow): number {
   return 0;
 }
 
+/** 한 페이지에 보여줄 행 수. */
+const PAGE_SIZE = 20;
+
+/** 현재 페이지 주변으로 최대 span개의 페이지 번호 윈도우. (총 페이지가 많아도 버튼이 폭주하지 않게) */
+function pageWindow(current: number, total: number, span = 5): number[] {
+  const half = Math.floor(span / 2);
+  let start = Math.max(1, current - half);
+  const end = Math.min(total, start + span - 1);
+  start = Math.max(1, end - span + 1);
+  const out: number[] = [];
+  for (let i = start; i <= end; i++) {
+    out.push(i);
+  }
+  return out;
+}
+
 /** 정렬 비교(널은 항상 뒤로). */
 function compareBy(a: SurveyRow, b: SurveyRow, key: keyof SurveyRow, dir: SortDir): number {
   const av = a[key];
@@ -254,6 +274,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
   const [query, setQuery] = useState('');
   const [sortKey, setSortKey] = useState<keyof SurveyRow | null>(null);
   const [sortDir, setSortDir] = useState<SortDir>('desc');
+  const [page, setPage] = useState(1);
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [publishDate, setPublishDate] = useState('');
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -288,6 +309,19 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
     }
     return [...base].sort((a, b) => compareBy(a, b, sortKey, sortDir));
   }, [rows, tab, approval, source, query, sortKey, sortDir]);
+
+  // 필터·정렬·탭이 바뀌면 1페이지로 되돌린다.
+  // biome-ignore lint/correctness/useExhaustiveDependencies: 의존 값 변화 시 페이지 리셋이 목적
+  useEffect(() => {
+    setPage(1);
+  }, [tab, approval, source, query, sortKey, sortDir]);
+
+  const pageCount = Math.max(1, Math.ceil(visible.length / PAGE_SIZE));
+  const safePage = Math.min(page, pageCount);
+  const paged = useMemo(
+    () => visible.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE),
+    [visible, safePage],
+  );
 
   const toggleSort = (key: keyof SurveyRow) => {
     if (sortKey === key) {
@@ -486,7 +520,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
             </tr>
           </thead>
           <tbody>
-            {visible.map((r) => {
+            {paged.map((r) => {
               const deletable = canDelete(r);
               const isPublishing = publishingId === r.id;
               return (
@@ -601,6 +635,44 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
           </tbody>
         </table>
       </div>
+
+      {visible.length > 0 && (
+        <div className='mt-16 flex items-center justify-center gap-4'>
+          <button
+            type='button'
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={safePage <= 1}
+            className='rounded-12 border border-gray-200 bg-white px-12 py-[6px] label-small text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40'
+          >
+            이전
+          </button>
+          {pageWindow(safePage, pageCount).map((n) => (
+            <button
+              key={n}
+              type='button'
+              onClick={() => setPage(n)}
+              className={`min-w-[36px] rounded-12 px-12 py-[6px] label-small transition-colors ${
+                n === safePage
+                  ? 'bg-gray-900 text-white'
+                  : 'border border-gray-200 bg-white text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {n}
+            </button>
+          ))}
+          <button
+            type='button'
+            onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
+            disabled={safePage >= pageCount}
+            className='rounded-12 border border-gray-200 bg-white px-12 py-[6px] label-small text-gray-600 transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40'
+          >
+            다음
+          </button>
+          <span className='ml-8 body-small text-gray-400'>
+            {safePage} / {pageCount} 페이지 · 총 {visible.length}건
+          </span>
+        </div>
+      )}
     </>
   );
 }

@@ -28,6 +28,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <Link href='/' className={NAV_LINK}>
             설문 관리
           </Link>
+          <Link href='/payouts' className={NAV_LINK}>
+            리워드 지급
+          </Link>
           <Link href='/surveys/new' className={NAV_LINK}>
             수기 등록
           </Link>

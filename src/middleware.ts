@@ -2,8 +2,8 @@ import { createServerClient } from '@supabase/ssr';
 import { type NextRequest, NextResponse } from 'next/server';
 import { isAllowed } from '@/lib/auth';
 
-/** 비로그인 공개 경로: 운영자 로그인, 고객 공개 접수 폼. */
-const PUBLIC_PATHS = ['/login', '/submit'];
+/** 비로그인 공개 경로: 운영자 로그인, 고객 공개 접수 폼, 요청자 참여내역(연락처 인증). */
+const PUBLIC_PATHS = ['/login', '/submit', '/post'];
 
 function isPublicPath(pathname: string): boolean {
   return PUBLIC_PATHS.some((p) => pathname === p || pathname.startsWith(`${p}/`));

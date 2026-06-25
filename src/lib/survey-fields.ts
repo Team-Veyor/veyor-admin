@@ -169,6 +169,13 @@ export const SETTLEMENT_OPTIONS = [
   { value: 'paid', label: '완료' },
 ];
 
+/** 게시 전/후 회신 여부(예·아니오) 드롭다운. 빈 값(미입력)은 '—'로 노출. text 컬럼에 문자열로 저장. */
+export const REPLY_OPTIONS = [
+  { value: '', label: '—' },
+  { value: '예', label: '예' },
+  { value: '아니오', label: '아니오' },
+];
+
 export const GENDER_OPTIONS = [
   { value: '', label: '전체' },
   { value: 'male', label: '남성' },
@@ -329,9 +336,10 @@ export const OPERATOR_FIELDS: SurveyFieldDef[] = [
   {
     column: 'pre_contact_reply',
     label: '게시 전 회신',
-    kind: 'text',
+    kind: 'select',
     owner: 'operator',
     inIntake: false,
+    options: REPLY_OPTIONS,
   },
   {
     column: 'post_contact_done',
@@ -343,9 +351,10 @@ export const OPERATOR_FIELDS: SurveyFieldDef[] = [
   {
     column: 'post_contact_reply',
     label: '게시 후 회신',
-    kind: 'text',
+    kind: 'select',
     owner: 'operator',
     inIntake: false,
+    options: REPLY_OPTIONS,
   },
   {
     column: 'settlement_status',
@@ -485,9 +494,10 @@ export const TABLE_FIELDS: SurveyFieldDef[] = [
   {
     column: 'pre_contact_reply',
     label: '게시 전 회신',
-    kind: 'text',
+    kind: 'select',
     owner: 'operator',
     inIntake: false,
+    options: REPLY_OPTIONS,
   },
   {
     column: 'post_contact_done',
@@ -499,9 +509,10 @@ export const TABLE_FIELDS: SurveyFieldDef[] = [
   {
     column: 'post_contact_reply',
     label: '게시 후 회신',
-    kind: 'text',
+    kind: 'select',
     owner: 'operator',
     inIntake: false,
+    options: REPLY_OPTIONS,
   },
   {
     column: 'collected_responses',
@@ -545,5 +556,12 @@ export const TABLE_FIELDS: SurveyFieldDef[] = [
     kind: 'boolean',
     owner: 'customer',
     inIntake: true,
+  },
+  {
+    column: 'admin_note',
+    label: '메모',
+    kind: 'text',
+    owner: 'operator',
+    inIntake: false,
   },
 ];

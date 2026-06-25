@@ -65,7 +65,7 @@ function QuestionControl({ field }: { field: SurveyFieldDef }) {
     );
   }
   if (field.kind === 'date') {
-    return <input type='date' name={name} className={FIELD} />;
+    return <DateWithNoticeTime name={name} />;
   }
   if (field.kind === 'url') {
     return <input type='url' name={name} placeholder='https://' className={FIELD} />;
@@ -74,6 +74,27 @@ function QuestionControl({ field }: { field: SurveyFieldDef }) {
     return <ByteLimitedInput name={name} maxBytes={field.maxBytes} />;
   }
   return <input type='text' name={name} placeholder='입력해 주세요' className={FIELD} />;
+}
+
+/**
+ * 날짜 선택 입력(마감일). 날짜를 고르면 뒤에 '오전 10시'를 함께 보여준다.
+ * 게시는 운영진이 지정한 하루의 오전 10시에 노출되므로, 마감 기준 시각이 오전 10시임을 안내한다.
+ * 제출값은 날짜(YYYY-MM-DD) 그대로 — ' 오전 10시'는 표시 전용.
+ */
+function DateWithNoticeTime({ name }: { name: string }) {
+  const [value, setValue] = useState('');
+  return (
+    <div className='flex items-center gap-12'>
+      <input
+        type='date'
+        name={name}
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        className={`${FIELD} min-w-0 flex-1`}
+      />
+      {value && <span className='shrink-0 label-medium text-gray-700'>오전 10시</span>}
+    </div>
+  );
 }
 
 /** 바이트 길이 제한 텍스트 입력(예: 제목 80byte). 입력 중 한도를 넘는 분량은 잘라낸다. */
