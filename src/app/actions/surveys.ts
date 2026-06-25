@@ -83,7 +83,7 @@ export async function createSurvey(_prev: ActionState, formData: FormData): Prom
     await supabase.from('surveys').delete().eq('id', sid);
     return { error: intakeRes.error?.message ?? opsRes.error?.message ?? '등록에 실패했습니다.' };
   }
-  revalidatePath('/');
+  revalidatePath('/', 'layout');
   redirect('/');
 }
 
@@ -122,7 +122,9 @@ export async function updateSurvey(
       return { error: error.message };
     }
   }
-  revalidatePath('/');
+  // 관리표(/)는 layout 스코프로 무효화해야 수정 후 확실히 갱신된다.
+  // ('page' 스코프는 prefetch된 클라 라우터 캐시가 남아 redirect 직후 표가 stale로 보이는 경우가 있음)
+  revalidatePath('/', 'layout');
   revalidatePath(`/surveys/${id}`);
   redirect('/');
 }
