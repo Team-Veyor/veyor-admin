@@ -62,7 +62,7 @@ export function ParticipationResult({ surveyId }: { surveyId: string }) {
           <table className='w-full border-separate border-spacing-0 whitespace-nowrap body-small'>
             <thead>
               <tr>
-                {['', '성별', '나이', '참여 시간(KST)'].map((h, i) => (
+                {['', '성별', '나이', '참여 시간(한국 시간 기준)'].map((h, i) => (
                   <th
                     key={h || `c${i}`}
                     className='border-b border-gray-200 bg-gray-50 px-12 py-12 text-left label-xsmall text-gray-500'

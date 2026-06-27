@@ -72,7 +72,7 @@ function fmtKst(iso: string | null): string {
     return '—';
   }
   const d = new Date(new Date(iso).getTime() + 9 * 60 * 60 * 1000);
-  return Number.isNaN(d.getTime()) ? '—' : d.toISOString().slice(0, 16).replace('T', ' ');
+  return Number.isNaN(d.getTime()) ? '—' : d.toISOString().slice(0, 16).replace('T', '-');
 }
 
 export async function verifyParticipation(surveyId: string, contact: string): Promise<Result> {
@@ -85,7 +85,7 @@ export async function verifyParticipation(surveyId: string, contact: string): Pr
   const [{ data: intake }, { data: survey }] = await Promise.all([
     supabase
       .from('survey_intakes')
-      .select('contact, suggested_amount')
+      .select('contact, suggested_amount, topic')
       .eq('survey_id', surveyId)
       .maybeSingle(),
     supabase.from('surveys').select('title, reward_amount').eq('id', surveyId).maybeSingle(),
@@ -135,12 +135,12 @@ export async function verifyParticipation(surveyId: string, contact: string): Pr
     };
   });
 
-  const price = (survey.reward_amount as number) ?? (intake.suggested_amount as number) ?? 0;
+  const price = (intake.suggested_amount as number | null) ?? (survey.reward_amount as number) ?? 0;
   const count = participants.length;
   return {
     ok: true,
     data: {
-      surveyTitle: (survey.title as string) ?? '',
+      surveyTitle: ((intake.topic as string | null) || (survey.title as string)) ?? '',
       pricePerPerson: price,
       count,
       totalPayment: price * count,

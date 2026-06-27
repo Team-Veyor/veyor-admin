@@ -35,6 +35,7 @@ export function Field({ field, value }: { field: SurveyFieldDef; value?: unknown
   const v = toInputValue(field, value);
   const name = field.column as string;
   const ph = field.placeholder;
+  const disabled = field.readOnly;
 
   let control: React.ReactNode;
   switch (field.kind) {
@@ -46,13 +47,14 @@ export function Field({ field, value }: { field: SurveyFieldDef; value?: unknown
           defaultValue={v}
           rows={3}
           placeholder={ph}
+          disabled={disabled}
           className={`${CONTROL} resize-y`}
         />
       );
       break;
     case 'select':
       control = (
-        <select id={name} name={name} defaultValue={v} className={CONTROL}>
+        <select id={name} name={name} defaultValue={v} disabled={disabled} className={CONTROL}>
           {(field.options ?? []).map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
@@ -63,7 +65,7 @@ export function Field({ field, value }: { field: SurveyFieldDef; value?: unknown
       break;
     case 'boolean':
       control = (
-        <select id={name} name={name} defaultValue={v} className={CONTROL}>
+        <select id={name} name={name} defaultValue={v} disabled={disabled} className={CONTROL}>
           {BOOL_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>
               {o.label}
@@ -82,16 +84,33 @@ export function Field({ field, value }: { field: SurveyFieldDef; value?: unknown
           defaultValue={v}
           inputMode='numeric'
           placeholder={ph}
+          disabled={disabled}
           className={CONTROL}
         />
       );
       break;
     case 'date':
-      control = <input id={name} name={name} type='date' defaultValue={v} className={CONTROL} />;
+      control = (
+        <input
+          id={name}
+          name={name}
+          type='date'
+          defaultValue={v}
+          disabled={disabled}
+          className={CONTROL}
+        />
+      );
       break;
     case 'datetime':
       control = (
-        <input id={name} name={name} type='datetime-local' defaultValue={v} className={CONTROL} />
+        <input
+          id={name}
+          name={name}
+          type='datetime-local'
+          defaultValue={v}
+          disabled={disabled}
+          className={CONTROL}
+        />
       );
       break;
     case 'url':
@@ -102,6 +121,7 @@ export function Field({ field, value }: { field: SurveyFieldDef; value?: unknown
           type='url'
           defaultValue={v}
           placeholder={ph ?? 'https://'}
+          disabled={disabled}
           className={CONTROL}
         />
       );
@@ -114,6 +134,7 @@ export function Field({ field, value }: { field: SurveyFieldDef; value?: unknown
           type='text'
           defaultValue={v}
           placeholder={ph}
+          disabled={disabled}
           className={CONTROL}
         />
       );

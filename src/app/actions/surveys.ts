@@ -7,6 +7,7 @@ import { coerceValue, kstPublishWindow } from '@/lib/coerce';
 import { requireOperator } from '@/lib/guard';
 import { getAdminClient } from '@/lib/supabase/admin';
 import {
+  estimatedDurationFromAmount,
   type FieldKind,
   INTAKE_FIELDS,
   OPERATOR_FIELDS,
@@ -19,6 +20,23 @@ const EDITABLE = [...INTAKE_FIELDS, ...PUBLISH_FIELDS, ...OPERATOR_FIELDS];
 const KIND_BY_COLUMN = new Map<string, FieldKind>(
   EDITABLE.map((f) => [f.column as string, f.kind]),
 );
+
+function publicFieldsFromSuggestedAmount(amount: unknown): {
+  reward_amount: number;
+  est_minutes: string | null;
+} {
+  const n = typeof amount === 'number' && Number.isFinite(amount) ? amount : null;
+  return {
+    reward_amount: n ?? 0,
+    est_minutes: estimatedDurationFromAmount(n),
+  };
+}
+
+function syncPublicFields(row: Record<string, unknown>) {
+  if ('suggested_amount' in row) {
+    Object.assign(row, publicFieldsFromSuggestedAmount(row.suggested_amount));
+  }
+}
 
 /** 폼에 존재하는 편집 가능 컬럼만 추려 플랫 행으로 변환. */
 function buildRow(formData: FormData): Record<string, unknown> {
@@ -36,6 +54,7 @@ function buildRow(formData: FormData): Record<string, unknown> {
   if ('reward_amount' in row && row.reward_amount == null) {
     row.reward_amount = 0;
   }
+  syncPublicFields(row);
   if (row.opens_at === null) {
     delete row.opens_at; // NOT NULL + default now()
   }
@@ -156,6 +175,15 @@ export async function updateSurveyField(
   if (error) {
     return { ok: false, error: error.message };
   }
+  if (column === 'suggested_amount') {
+    const { error: syncError } = await supabase
+      .from('surveys')
+      .update(publicFieldsFromSuggestedAmount(coerced))
+      .eq('id', id);
+    if (syncError) {
+      return { ok: false, error: syncError.message };
+    }
+  }
   revalidatePath('/');
   return { ok: true };
 }
@@ -196,6 +224,23 @@ export async function publishSurvey(
     return { ok: false, error: '게시일(YYYY-MM-DD)을 올바르게 선택해주세요.' };
   }
   const supabase = getAdminClient();
+  const { data: intake, error: intakeError } = await supabase
+    .from('survey_intakes')
+    .select('suggested_amount')
+    .eq('survey_id', id)
+    .maybeSingle();
+  if (intakeError) {
+    return { ok: false, error: intakeError.message };
+  }
+  if (intake?.suggested_amount != null) {
+    const { error: syncError } = await supabase
+      .from('surveys')
+      .update(publicFieldsFromSuggestedAmount(intake.suggested_amount))
+      .eq('id', id);
+    if (syncError) {
+      return { ok: false, error: syncError.message };
+    }
+  }
   // 게시 전 앱 노출 필수값 확인
   const { data: target } = await supabase
     .from('surveys')

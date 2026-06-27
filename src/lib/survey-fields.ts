@@ -43,6 +43,8 @@ export interface SurveyFieldDef {
   placeholder?: string;
   /** 접수 폼 입력값 최대 바이트 수(텍스트 길이 제한). */
   maxBytes?: number;
+  /** 화면에는 보여주되 FormData에는 싣지 않는 자동 계산/읽기 전용 필드. */
+  readOnly?: boolean;
 }
 
 /** surveys 테이블 한 행의 전체 형태(마이그레이션 반영). */
@@ -201,6 +203,19 @@ export const SOURCE_LABEL: Record<SurveyRow['source'], string> = {
   manual: '수기',
   intake: '접수',
 };
+
+/** 적정 금액(100원 단위)으로 앱 카드에 표시할 예상 소요시간을 계산한다. */
+export function estimatedDurationFromAmount(amount: unknown): string | null {
+  const n = typeof amount === 'number' ? amount : Number(amount);
+  if (!Number.isFinite(n) || n <= 0) {
+    return null;
+  }
+  const bucket = Math.max(1, Math.ceil(n / 100));
+  if (bucket === 1) {
+    return '30초~1분';
+  }
+  return `${bucket - 1}~${bucket}분`;
+}
 
 /**
  * 고객(모집자)이 공개 접수 폼에서 입력하는 항목. 엑셀 열 순서를 따른다.
@@ -408,20 +423,21 @@ export const PUBLISH_FIELDS: SurveyFieldDef[] = [
   },
   {
     column: 'reward_amount',
-    label: '리워드 금액(확정)',
+    label: '리워드 금액(자동)',
     kind: 'money',
     owner: 'operator',
     inIntake: false,
-    placeholder: '예: 300',
+    hint: '운영 · 정산의 적정 금액 저장 시 앱 노출 금액으로 자동 반영됩니다.',
+    readOnly: true,
   },
   {
     column: 'est_minutes',
-    label: '예상 소요시간',
+    label: '예상 소요시간(자동)',
     kind: 'text',
     owner: 'operator',
     inIntake: false,
-    hint: '예) 2-3',
-    placeholder: '2-3',
+    hint: '적정 금액 기준으로 자동 저장됩니다. 예: 300원 → 2~3분',
+    readOnly: true,
   },
   {
     column: 'target_gender',

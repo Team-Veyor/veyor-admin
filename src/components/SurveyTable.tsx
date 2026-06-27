@@ -8,6 +8,7 @@ import {
   unpublishSurvey,
   updateSurveyField,
 } from '@/app/actions/surveys';
+import { afterPostUrl } from '@/lib/message-templates';
 import {
   APPROVAL_OPTIONS,
   completionUrl,
@@ -44,6 +45,7 @@ const TOOL =
 const TH =
   'sticky top-0 z-10 border-b border-gray-200 bg-gray-50 px-12 py-12 text-left label-xsmall text-gray-500';
 const TD = 'border-b border-gray-100 px-12 py-12 align-middle';
+const PUBLISHED_EXTRA_COLUMNS = 4;
 
 type Tab = 'all' | 'published';
 type SortDir = 'asc' | 'desc';
@@ -277,7 +279,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
   const [page, setPage] = useState(1);
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [publishDate, setPublishDate] = useState('');
-  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -389,25 +391,26 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
     });
   };
 
-  const copyLink = async (id: string) => {
+  const copyLink = async (key: string, url: string) => {
     try {
-      await navigator.clipboard.writeText(completionUrl(id));
-      setCopiedId(id);
-      window.setTimeout(() => setCopiedId((c) => (c === id ? null : c)), 1500);
+      await navigator.clipboard.writeText(url);
+      setCopiedKey(key);
+      window.setTimeout(() => setCopiedKey((c) => (c === key ? null : c)), 1500);
     } catch {
       setError('복사에 실패했습니다. 링크를 직접 선택해 복사해주세요.');
     }
   };
 
   const exportCsv = () => {
-    const extra = tab === 'published' ? ['게시일', '노출종료', '완료 인증 링크'] : [];
+    const extra =
+      tab === 'published' ? ['게시일', '노출종료', '완료 인증 링크', '참여 내역 링크'] : [];
     const header = ['출처', ...TABLE_FIELDS.map((c) => c.label), ...extra].map(csvCell).join(',');
     const lines = visible.map((r) =>
       [
         SOURCE_LABEL[r.source],
         ...TABLE_FIELDS.map((c) => csvValue(c, r[c.column])),
         ...(tab === 'published'
-          ? [fmtKst(r.opens_at), fmtKst(r.expires_at), completionUrl(r.id)]
+          ? [fmtKst(r.opens_at), fmtKst(r.expires_at), completionUrl(r.id), afterPostUrl(r.id)]
           : []),
       ]
         .map(csvCell)
@@ -435,7 +438,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
     </button>
   );
 
-  const colCount = TABLE_FIELDS.length + 1 + (tab === 'published' ? 3 : 0);
+  const colCount = TABLE_FIELDS.length + 1 + (tab === 'published' ? PUBLISHED_EXTRA_COLUMNS : 0);
 
   return (
     <>
@@ -515,6 +518,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
                     노출종료{sortMark('expires_at')}
                   </th>
                   <th className={TH}>완료 인증 링크</th>
+                  <th className={TH}>참여 내역 링크</th>
                 </>
               )}
             </tr>
@@ -604,16 +608,33 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
                         <div className='flex items-center gap-6'>
                           <button
                             type='button'
-                            onClick={() => copyLink(r.id)}
+                            onClick={() => copyLink(`${r.id}:complete`, completionUrl(r.id))}
                             className='inline-flex items-center rounded-12 bg-gray-100 px-12 py-[6px] label-small text-gray-700 transition-colors hover:bg-gray-200'
                           >
-                            {copiedId === r.id ? '복사됨 ✓' : '링크 복사'}
+                            {copiedKey === `${r.id}:complete` ? '복사됨 ✓' : '링크 복사'}
                           </button>
                           <span
                             className='inline-block max-w-[260px] truncate text-gray-400'
                             title={completionUrl(r.id)}
                           >
                             {completionUrl(r.id)}
+                          </span>
+                        </div>
+                      </td>
+                      <td className={TD}>
+                        <div className='flex items-center gap-6'>
+                          <button
+                            type='button'
+                            onClick={() => copyLink(`${r.id}:result`, afterPostUrl(r.id))}
+                            className='inline-flex items-center rounded-12 bg-gray-100 px-12 py-[6px] label-small text-gray-700 transition-colors hover:bg-gray-200'
+                          >
+                            {copiedKey === `${r.id}:result` ? '복사됨 ✓' : '링크 복사'}
+                          </button>
+                          <span
+                            className='inline-block max-w-[260px] truncate text-gray-400'
+                            title={afterPostUrl(r.id)}
+                          >
+                            {afterPostUrl(r.id)}
                           </span>
                         </div>
                       </td>

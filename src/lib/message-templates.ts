@@ -5,12 +5,9 @@ import { completionUrl, type SurveyRow } from '@/lib/survey-fields';
  * 설문 데이터(SurveyRow) + 완료 참여수로 변수를 채워 문자열을 만든다. 운영자가 수정·복사해 사용.
  */
 
-/**
- * 운영자(회사) 수금계좌. 공개 레포라 실제 계좌는 코드에 두지 않고 env로 주입한다.
- * NEXT_PUBLIC_OPERATOR_DEPOSIT_ACCOUNT 미설정 시 플레이스홀더가 노출되므로 배포 환경에 반드시 설정.
- */
+/** 운영자(회사) 수금계좌. NEXT_PUBLIC_OPERATOR_DEPOSIT_ACCOUNT 로 배포 환경에서 교체할 수 있다. */
 export const OPERATOR_DEPOSIT_ACCOUNT =
-  process.env.NEXT_PUBLIC_OPERATOR_DEPOSIT_ACCOUNT ?? '(입금계좌 미설정)';
+  process.env.NEXT_PUBLIC_OPERATOR_DEPOSIT_ACCOUNT ?? '토스뱅크 1000-7555-5522 김가온';
 
 /** afterPostLink(요청자 참여내역) 호스트 = 어드민 도메인. 커스텀 도메인 있으면 env로 지정. */
 export const ADMIN_BASE_URL =
@@ -24,6 +21,10 @@ export function afterPostUrl(surveyId: string): string {
 
 function won(n: number | null | undefined): string {
   return (n ?? 0).toLocaleString('ko-KR');
+}
+
+function count(n: number): string {
+  return n.toLocaleString('ko-KR');
 }
 
 /** date/ISO → 'YYYY-MM-DD' (KST). 날짜 문자열은 그대로, ISO(UTC)는 +9h 후 절단. */
@@ -57,9 +58,9 @@ export function buildMessages(survey: SurveyRow, completedCount: number): Messag
   const dueDate = kstDate(survey.deadline);
   const postingDate = kstDate(survey.requested_publish_date) || kstDate(survey.opens_at);
   const postingNext = postingDate ? nextDay(postingDate) : '';
-  // 게시승인=적정금액(운영자 산정 제안), 게시후=확정 리워드(실제 지급액). 서로 폴백.
+  // 적정 금액을 앱 노출/정산 금액의 기준으로 쓰고, 없을 때만 확정 리워드로 폴백한다.
   const priceApproval = survey.suggested_amount ?? survey.reward_amount ?? 0;
-  const pricePost = survey.reward_amount ?? survey.suggested_amount ?? 0;
+  const pricePost = survey.suggested_amount ?? survey.reward_amount ?? 0;
   const totalPayment = pricePost * completedCount;
   const beforePostLink = completionUrl(survey.id);
   const afterPostLink = afterPostUrl(survey.id);
@@ -101,14 +102,13 @@ export function buildMessages(survey: SurveyRow, completedCount: number): Messag
 
 고객님의 설문은 ${postingDate} 오전 10:00부터 다음날 ${postingNext}일 오전 9:59까지 게시되었습니다.
 
-[비용 안내]
-설문 홍보 결과, ${won(completedCount)}명 모집되었고, 참여자분들께는 1인당 ${won(pricePost)}원 사례를 드렸습니다.
+[정산 안내]
+1인당 ${won(pricePost)}원, 총 ${count(completedCount)}명
 
-아래 금액 입금해주시면 감사하겠습니다!
-${won(totalPayment)}원(${won(pricePost)}원, ${won(completedCount)}명)
-계좌 번호: ${OPERATOR_DEPOSIT_ACCOUNT}
+입금금액: ${won(totalPayment)}원
+${OPERATOR_DEPOSIT_ACCOUNT}
 
-설문 참여 내역 확인하기: ${afterPostLink}`;
+설문 게시 후 참여 내역 링크: ${afterPostLink}`;
 
   return [
     { key: 'approval', label: '게시 승인 안내', body: approval },
