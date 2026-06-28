@@ -42,8 +42,10 @@ const INLINE_EDITABLE = new Set<string>([
 
 const CELL_EDIT =
   'w-full min-w-[72px] rounded-8 border border-transparent bg-transparent px-8 py-[6px] body-small text-gray-900 transition-colors hover:border-gray-200 focus:border-brand-500 focus:outline-none';
+const MEMO_PREVIEW =
+  'block h-[34px] w-[560px] min-w-[320px] max-w-[calc(100vw-96px)] overflow-hidden truncate rounded-8 border border-transparent bg-transparent px-8 py-[6px] text-left body-small text-gray-900 transition-colors hover:border-gray-200 hover:bg-white focus:border-brand-500 focus:outline-none';
 const MEMO_EDIT =
-  'min-h-[112px] w-[560px] min-w-[320px] max-w-[calc(100vw-96px)] resize-y overflow-hidden whitespace-pre-wrap rounded-12 border border-gray-200 bg-white px-10 py-8 body-small leading-[150%] text-gray-900 transition-colors focus:border-brand-500 focus:outline-none';
+  'min-h-[112px] w-[560px] min-w-[320px] max-w-[calc(100vw-96px)] resize-y overflow-hidden whitespace-pre-wrap rounded-12 border border-brand-500 bg-white px-10 py-8 body-small leading-[150%] text-gray-900 shadow-sm transition-all focus:outline-none';
 
 const TOOL =
   'rounded-16 border border-gray-200 bg-white px-16 py-[10px] body-small text-gray-800 transition-colors focus:border-gray-900 focus:outline-none';
@@ -105,9 +107,16 @@ function memoRows(value: unknown): number {
   );
 }
 
-function renderCell(row: SurveyRow, field: SurveyFieldDef, save: SaveFn) {
+function renderCell(
+  row: SurveyRow,
+  field: SurveyFieldDef,
+  save: SaveFn,
+  expandedMemoId: string | null,
+  setExpandedMemoId: (id: string | null) => void,
+) {
   const col = field.column as string;
   const value = row[field.column];
+  const textValue = value == null ? '' : String(value);
 
   if (col === 'requested_publish_date' && row.is_published) {
     return (
@@ -122,6 +131,39 @@ function renderCell(row: SurveyRow, field: SurveyFieldDef, save: SaveFn) {
   }
 
   if (INLINE_EDITABLE.has(col)) {
+    if (col === 'admin_note') {
+      if (expandedMemoId !== row.id) {
+        return (
+          <button
+            type='button'
+            className={`${MEMO_PREVIEW} ${textValue ? '' : 'text-gray-400'}`}
+            title={textValue}
+            onClick={() => {
+              setExpandedMemoId(row.id);
+              window.setTimeout(() => document.getElementById(`memo-${row.id}`)?.focus(), 0);
+            }}
+          >
+            {textValue || '메모 입력'}
+          </button>
+        );
+      }
+      return (
+        <textarea
+          id={`memo-${row.id}`}
+          className={MEMO_EDIT}
+          defaultValue={textValue}
+          rows={memoRows(value)}
+          onInput={(e) => {
+            e.currentTarget.style.height = 'auto';
+            e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
+          }}
+          onBlur={(e) => {
+            save(row.id, col, e.target.value);
+            setExpandedMemoId(null);
+          }}
+        />
+      );
+    }
     if (field.kind === 'select') {
       const tone =
         col === 'approval_status'
@@ -180,16 +222,9 @@ function renderCell(row: SurveyRow, field: SurveyFieldDef, save: SaveFn) {
     if (field.kind === 'textarea') {
       return (
         <textarea
-          className={col === 'admin_note' ? MEMO_EDIT : `${CELL_EDIT} min-h-[88px] resize-y`}
+          className={`${CELL_EDIT} min-h-[88px] resize-y`}
           defaultValue={value == null ? '' : String(value)}
-          rows={col === 'admin_note' ? memoRows(value) : 3}
-          onInput={(e) => {
-            if (col !== 'admin_note') {
-              return;
-            }
-            e.currentTarget.style.height = 'auto';
-            e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
-          }}
+          rows={3}
           onBlur={(e) => save(row.id, col, e.target.value)}
         />
       );
@@ -335,6 +370,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
   const [publishingId, setPublishingId] = useState<string | null>(null);
   const [publishDate, setPublishDate] = useState('');
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [expandedMemoId, setExpandedMemoId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -648,7 +684,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
                   </td>
                   {TABLE_FIELDS.map((f) => (
                     <td key={f.column as string} className={TD}>
-                      {renderCell(r, f, save)}
+                      {renderCell(r, f, save, expandedMemoId, setExpandedMemoId)}
                     </td>
                   ))}
                   {tab === 'published' && (
