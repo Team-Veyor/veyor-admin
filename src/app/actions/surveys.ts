@@ -232,6 +232,12 @@ export async function publishSurvey(
   if (intakeError) {
     return { ok: false, error: intakeError.message };
   }
+  const publishDateRes = await supabase
+    .from('survey_intakes')
+    .upsert({ survey_id: id, requested_publish_date: date }, { onConflict: 'survey_id' });
+  if (publishDateRes.error) {
+    return { ok: false, error: publishDateRes.error.message };
+  }
   if (intake?.suggested_amount != null) {
     const { error: syncError } = await supabase
       .from('surveys')

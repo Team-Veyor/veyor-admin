@@ -60,6 +60,15 @@ function fmtKst(iso: string | null): string {
   return d.toISOString().slice(0, 16).replace('T', ' ');
 }
 
+/** ISO(UTC) → KST 'YYYY-MM-DD' */
+function fmtKstDate(iso: string | null): string {
+  if (!iso) {
+    return '';
+  }
+  const d = new Date(new Date(iso).getTime() + 9 * 60 * 60 * 1000);
+  return Number.isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
+}
+
 /** KST 기준 오늘 'YYYY-MM-DD' (게시 기본일) */
 function kstToday(): string {
   return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -82,6 +91,18 @@ function formatValue(field: SurveyFieldDef, value: unknown): string {
 function renderCell(row: SurveyRow, field: SurveyFieldDef, save: SaveFn) {
   const col = field.column as string;
   const value = row[field.column];
+
+  if (col === 'requested_publish_date' && row.is_published) {
+    return (
+      <input
+        className={`${CELL_EDIT} disabled:opacity-100`}
+        type='date'
+        value={fmtKstDate(row.opens_at)}
+        disabled
+        title='실제 앱 노출일'
+      />
+    );
+  }
 
   if (INLINE_EDITABLE.has(col)) {
     if (field.kind === 'select') {
