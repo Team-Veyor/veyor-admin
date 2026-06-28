@@ -42,6 +42,8 @@ const INLINE_EDITABLE = new Set<string>([
 
 const CELL_EDIT =
   'w-full min-w-[72px] rounded-8 border border-transparent bg-transparent px-8 py-[6px] body-small text-gray-900 transition-colors hover:border-gray-200 focus:border-brand-500 focus:outline-none';
+const MEMO_EDIT =
+  'min-h-[112px] w-[560px] min-w-[320px] max-w-[calc(100vw-96px)] resize-y overflow-hidden whitespace-pre-wrap rounded-12 border border-gray-200 bg-white px-10 py-8 body-small leading-[150%] text-gray-900 transition-colors focus:border-brand-500 focus:outline-none';
 
 const TOOL =
   'rounded-16 border border-gray-200 bg-white px-16 py-[10px] body-small text-gray-800 transition-colors focus:border-gray-900 focus:outline-none';
@@ -90,6 +92,17 @@ function formatValue(field: SurveyFieldDef, value: unknown): string {
     return opt ? opt.label : String(value);
   }
   return String(value);
+}
+
+function memoRows(value: unknown): number {
+  const text = value == null ? '' : String(value);
+  if (!text.trim()) {
+    return 5;
+  }
+  return Math.max(
+    5,
+    text.split('\n').reduce((rows, line) => rows + Math.max(1, Math.ceil(line.length / 36)), 0),
+  );
 }
 
 function renderCell(row: SurveyRow, field: SurveyFieldDef, save: SaveFn) {
@@ -161,6 +174,23 @@ function renderCell(row: SurveyRow, field: SurveyFieldDef, save: SaveFn) {
           type='date'
           defaultValue={value ? String(value).slice(0, 10) : ''}
           onChange={(e) => save(row.id, col, e.target.value)}
+        />
+      );
+    }
+    if (field.kind === 'textarea') {
+      return (
+        <textarea
+          className={col === 'admin_note' ? MEMO_EDIT : `${CELL_EDIT} min-h-[88px] resize-y`}
+          defaultValue={value == null ? '' : String(value)}
+          rows={col === 'admin_note' ? memoRows(value) : 3}
+          onInput={(e) => {
+            if (col !== 'admin_note') {
+              return;
+            }
+            e.currentTarget.style.height = 'auto';
+            e.currentTarget.style.height = `${e.currentTarget.scrollHeight}px`;
+          }}
+          onBlur={(e) => save(row.id, col, e.target.value)}
         />
       );
     }
@@ -324,7 +354,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
       }
       if (q) {
         const hay =
-          `${r.topic ?? ''} ${r.title ?? ''} ${r.contact ?? ''} ${r.target_description ?? ''}`.toLowerCase();
+          `${r.topic ?? ''} ${r.title ?? ''} ${r.contact ?? ''} ${r.target_description ?? ''} ${r.admin_note ?? ''}`.toLowerCase();
         if (!hay.includes(q)) {
           return false;
         }

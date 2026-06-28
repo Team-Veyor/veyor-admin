@@ -615,7 +615,7 @@ export const TABLE_FIELDS: SurveyFieldDef[] = [
   {
     column: 'admin_note',
     label: '메모',
-    kind: 'text',
+    kind: 'textarea',
     owner: 'operator',
     inIntake: false,
   },
