@@ -43,6 +43,7 @@ const INLINE_EDITABLE = new Set<string>([
 
 const CELL_EDIT =
   'w-full min-w-[72px] rounded-8 border border-transparent bg-transparent px-8 py-[6px] body-small text-gray-900 transition-colors hover:border-gray-200 focus:border-brand-500 focus:outline-none';
+const TITLE_CELL = 'min-w-[320px] w-[360px] max-w-[460px]';
 const MEMO_PREVIEW =
   'block h-[34px] w-[560px] min-w-[320px] max-w-[calc(100vw-96px)] overflow-hidden truncate rounded-8 border border-transparent bg-transparent px-8 py-[6px] text-left body-small text-gray-900 transition-colors hover:border-gray-200 hover:bg-white focus:border-brand-500 focus:outline-none';
 const MEMO_EDIT =
@@ -232,7 +233,7 @@ function renderCell(
     }
     return (
       <input
-        className={CELL_EDIT}
+        className={`${CELL_EDIT} ${col === 'title' ? TITLE_CELL : ''}`}
         type='text'
         defaultValue={value == null ? '' : String(value)}
         onBlur={(e) => save(row.id, col, e.target.value)}
@@ -259,6 +260,16 @@ function renderCell(
       <span className='text-gray-300'>—</span>
     );
   }
+  if (col === 'title') {
+    return (
+      <span
+        className={`inline-block ${TITLE_CELL} truncate align-middle text-gray-900`}
+        title={value == null ? '' : String(value)}
+      >
+        {formatValue(field, value)}
+      </span>
+    );
+  }
   return (
     <span
       className='inline-block max-w-[240px] truncate align-middle text-gray-800'
@@ -267,6 +278,10 @@ function renderCell(
       {formatValue(field, value)}
     </span>
   );
+}
+
+function cellClass(field: SurveyFieldDef): string {
+  return `${TD} ${field.column === 'title' ? TITLE_CELL : ''}`;
 }
 
 function csvCell(s: string): string {
@@ -588,7 +603,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
               {TABLE_FIELDS.map((f) => (
                 <th
                   key={f.column as string}
-                  className={`${TH} cursor-pointer select-none`}
+                  className={`${TH} cursor-pointer select-none ${f.column === 'title' ? TITLE_CELL : ''}`}
                   onClick={() => toggleSort(f.column)}
                 >
                   {f.label}
@@ -684,7 +699,7 @@ export function SurveyTable({ rows }: { rows: SurveyRow[] }) {
                     )}
                   </td>
                   {TABLE_FIELDS.map((f) => (
-                    <td key={f.column as string} className={TD}>
+                    <td key={f.column as string} className={cellClass(f)}>
                       {renderCell(r, f, save, expandedMemoId, setExpandedMemoId)}
                     </td>
                   ))}
