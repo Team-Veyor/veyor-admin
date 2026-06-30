@@ -102,6 +102,7 @@ export async function createSurvey(_prev: ActionState, formData: FormData): Prom
     await supabase.from('surveys').delete().eq('id', sid);
     return { error: intakeRes.error?.message ?? opsRes.error?.message ?? '등록에 실패했습니다.' };
   }
+  revalidatePath('/');
   revalidatePath('/', 'layout');
   redirect('/');
 }
@@ -143,6 +144,7 @@ export async function updateSurvey(
   }
   // 관리표(/)는 layout 스코프로 무효화해야 수정 후 확실히 갱신된다.
   // ('page' 스코프는 prefetch된 클라 라우터 캐시가 남아 redirect 직후 표가 stale로 보이는 경우가 있음)
+  revalidatePath('/');
   revalidatePath('/', 'layout');
   revalidatePath(`/surveys/${id}`);
   redirect('/');
@@ -185,6 +187,7 @@ export async function updateSurveyField(
     }
   }
   revalidatePath('/');
+  revalidatePath('/', 'layout');
   return { ok: true };
 }
 
@@ -206,6 +209,7 @@ export async function deleteSurvey(id: string): Promise<{ ok: boolean; error?: s
     return { ok: false, error: error.message };
   }
   revalidatePath('/');
+  revalidatePath('/', 'layout');
   return { ok: true };
 }
 
@@ -269,6 +273,7 @@ export async function publishSurvey(
     return { ok: false, error: error.message };
   }
   revalidatePath('/');
+  revalidatePath('/', 'layout');
   return { ok: true };
 }
 
@@ -281,5 +286,6 @@ export async function unpublishSurvey(id: string): Promise<{ ok: boolean; error?
     return { ok: false, error: error.message };
   }
   revalidatePath('/');
+  revalidatePath('/', 'layout');
   return { ok: true };
 }

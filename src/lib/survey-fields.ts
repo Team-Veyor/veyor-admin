@@ -490,8 +490,14 @@ export function completionUrl(surveyId: string): string {
 /** 관리 테이블 컬럼 순서(엑셀 느낌): 상태 → 접수 → 운영. */
 export const TABLE_FIELDS: SurveyFieldDef[] = [
   ...OPERATOR_FIELDS.filter((f) => f.column === 'approval_status' || f.column === 'is_published'),
-  { column: 'topic', label: '제목', kind: 'text', owner: 'customer', inIntake: true },
-  { column: 'target_description', label: '대상', kind: 'text', owner: 'operator', inIntake: false },
+  { column: 'title', label: '제목', kind: 'text', owner: 'operator', inIntake: false },
+  {
+    column: 'target_description',
+    label: '대상 메모',
+    kind: 'text',
+    owner: 'operator',
+    inIntake: false,
+  },
   {
     column: 'target_gender',
     label: '타깃 성별',

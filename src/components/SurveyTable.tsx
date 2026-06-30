@@ -25,6 +25,7 @@ const INLINE_EDITABLE = new Set<string>([
   'pre_contact_done',
   'post_contact_done',
   // #10 바로(인라인) 수정 대상. 확보응답(collected_responses)은 #6 자동집계라 읽기 전용으로 제외.
+  'title',
   'target_description',
   'target_gender',
   'target_occupation',
